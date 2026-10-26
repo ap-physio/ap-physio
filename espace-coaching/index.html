@@ -655,10 +655,19 @@ function dayHtml(pid){
 /* Admin */
 function adminHtml(){
   if(ui.aview==='edit'&&ui.edit)return '<main class="app wide">'+editorHtml()+'</main>';
+  function onglet(vue, action, libelle){
+    var actif = ui.aview === vue;
+    return '<button class="tab'+(actif?' on':'')+'" type="button" data-a="'+action+'"'+
+           (actif?' aria-current="page"':'')+'>'+libelle+'</button>';
+  }
   var tabs='<nav class="tabs" aria-label="Espace administrateur">'+
-    '<button class="tab'+(ui.aview==='exercises'?'':' on')+'" type="button" data-a="tab-s"'+(ui.aview==='exercises'?'':' aria-current="page"')+'>Séances</button>'+
-    '<button class="tab'+(ui.aview==='exercises'?' on':'')+'" type="button" data-a="tab-e"'+(ui.aview==='exercises'?' aria-current="page"':'')+'>Exercices</button></nav>';
-  return '<main class="app wide">'+tabs+(ui.aview==='exercises'?exercisesHtml():sessionsHtml())+'</main>';
+    onglet('sessions','tab-s','Séances')+
+    onglet('exercises','tab-e','Exercices')+
+    onglet('breath','tab-b','Respiration')+'</nav>';
+  var corps = ui.aview==='exercises' ? exercisesHtml()
+            : ui.aview==='breath'    ? breathHtml()
+            : sessionsHtml();
+  return '<main class="app wide">'+tabs+corps+'</main>';
 }
 function sessRow(s){
   var ds=s.dates.slice(0,4).map(function(d){return fmtShort.format(parse(d));}).join(' · ')+(s.dates.length>4?' +'+(s.dates.length-4):'');
@@ -905,6 +914,7 @@ $app.addEventListener('click',function(e){
     case 'eq-rm':removeEquip(d.p,+d.i);break;
     case 'ex-cat':ui.exCat=d.c;render();break;
     case 'tab-e':ui.aview='exercises';ui.exErr='';nav();break;
+    case 'tab-b':ui.aview='breath';nav();break;
     case 'new':openEditor(null,d.p);break;
     case 'edit':openEditor(d.s);break;
     case 'del':
