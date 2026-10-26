@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /espace-coaching/
+
+Sitemap: https://ap-physio.ch/sitemap.xml

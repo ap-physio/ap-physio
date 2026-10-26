@@ -1,0 +1,18 @@
+{
+  "name": "Mon espace coaching — AP Physio",
+  "short_name": "Mon coaching",
+  "description": "Séances d'exercices et respiration, préparées par Aurèle Pouchelet, physiothérapeute.",
+  "lang": "fr",
+  "dir": "ltr",
+  "start_url": "/espace-coaching/",
+  "scope": "/espace-coaching/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#121211",
+  "theme_color": "#121211",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
