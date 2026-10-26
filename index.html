@@ -235,6 +235,10 @@ section { scroll-margin-top: 96px; }
 .intro { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 7vw, 96px); align-items: start; }
 .intro .who { display: grid; gap: 12px; }
 .intro .role { color: var(--gold-text); font-weight: 500; }
+/* Parcours : libellé discret au-dessus de sa valeur, comme une fiche. */
+.parcours { display: grid; gap: 14px; margin-top: 10px; padding-top: 20px; border-top: 1px solid var(--line); }
+.parcours dt { font-size: .74rem; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.parcours dd { margin: 4px 0 0; font-size: .99rem; color: var(--text); }
 .intro .body { display: grid; gap: 1.25em; max-width: 60ch; }
 .intro .body p:first-child { font-size: 1.25rem; font-weight: 300; line-height: 1.6; }
 @media (max-width: 820px) { .intro { grid-template-columns: minmax(0, 1fr); } }
@@ -445,6 +449,12 @@ footer img { width: 34px; height: auto; }
         <div class="who">
           <h2 id="t-presentation">Aurèle Pouchelet</h2>
           <p class="role">Physiothérapeute indépendant</p>
+          <dl class="parcours">
+            <dt>Diplôme</dt>
+            <dd>AP-HP, Assistance publique – Hôpitaux de Paris, 2019</dd>
+            <dt>Thérapie manuelle</dt>
+            <dd>Concepts Maitland et Mulligan</dd>
+          </dl>
         </div>
         <div class="body">
           <p>Je vous reçois dans mes deux cabinets, à Vouvry et à Lutry.</p>
@@ -563,6 +573,7 @@ footer img { width: 34px; height: auto; }
             <p>J'applique les tarifs réglementés de l'assurance maladie et de l'assurance accident. Vous n'avez donc pas de surprise sur le montant : il est fixé, identique partout en Suisse.</p>
             <p>La physiothérapie est prise en charge sur prescription médicale. Votre médecin établit l'ordonnance, je facture directement l'assurance, et seules votre franchise et votre quote-part restent à votre charge. En cas d'accident, c'est l'assurance accident qui prend le relais.</p>
             <p>Sans ordonnance, les séances restent possibles, mais à vos frais ou selon votre assurance complémentaire.</p>
+            <p>Un rendez-vous s'annule au plus tard 24 heures à l'avance. Passé ce délai, la séance est facturée.</p>
           </div>
         </div>
       </div>
@@ -623,7 +634,7 @@ footer img { width: 34px; height: auto; }
           <details>
             <summary>Comment annuler un rendez-vous ?</summary>
             <div class="answer">
-              Prévenez-moi par téléphone ou par e-mail dès que possible.
+              Prévenez-moi par téléphone ou par e-mail au plus tard 24 heures avant le rendez-vous. Passé ce délai, la séance est facturée, car le créneau ne peut plus être proposé à quelqu'un d'autre.
             </div>
           </details>
         </div>
