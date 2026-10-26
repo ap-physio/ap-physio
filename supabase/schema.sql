@@ -68,7 +68,9 @@ security definer
 set search_path = ''
 as $$
 begin
-  if not public.est_admin() then
+  -- auth.uid() est vide quand l'écriture vient du SQL Editor ou d'une clé de
+  -- service : c'est déjà un accès de confiance, on ne bride rien.
+  if auth.uid() is not null and not public.est_admin() then
     new.role := old.role;
     new.materiel := old.materiel;
     new.id := old.id;
