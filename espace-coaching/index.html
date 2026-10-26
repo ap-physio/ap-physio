@@ -660,7 +660,7 @@ function dayHtml(pid){
   var d=ui.sel,ss=sessionsOn(pid,d);
   var any=db.sessions.some(function(s){return s.patientId===pid;});
   var h='<section class="day"><h2>'+esc(cap(fmtLong.format(parse(d))))+'</h2>';
-  if(!ss.length)h+='<p class="muted">'+(any?'Pas de séance prévue ce jour.':'Ton kiné n’a pas encore préparé de séance pour toi.')+'</p>';
+  if(!ss.length)h+='<p class="muted">'+(any?'Pas de séance prévue ce jour.':'Aurèle n’a pas encore préparé de séance pour toi.')+'</p>';
   ss.forEach(function(s){
     var done=isDone(s,d);
     h+='<article class="sheet"><div class="sheet-top"><h3>'+esc(s.title)+'</h3>'+(done?'<span class="tag">Terminée</span>':'')+'</div>'+
