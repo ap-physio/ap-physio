@@ -421,7 +421,7 @@ function oops(e, quoi){
 /* ---------- Lecture ---------- */
 function toPatient(r){
   var n = ((r.prenom||'') + ' ' + (r.nom||'')).trim();
-  return {id:r.id, name:n||'Client', email:r.email||'', equipment:r.materiel||[], role:r.role};
+  return {id:r.id, name:n||'Sans nom', email:r.email||'', equipment:r.materiel||[], role:r.role};
 }
 function toExercise(r){
   return {id:r.id, name:r.nom, cat:r.categorie, unit:r.unite==='sec'?'sec':'reps',
@@ -735,9 +735,9 @@ function equipHtml(p){
 }
 /* Liste des comptes patients. Un clic ouvre la page du patient. */
 function sessionsHtml(){
-  var h='<div class="bar"><h2>Mes clients</h2><p class="meta">'+plural(db.patients.length,'compte')+'</p></div>';
+  var h='<div class="bar"><h2>Mes clients et patients</h2><p class="meta">'+plural(db.patients.length,'compte')+'</p></div>';
   if(!db.patients.length){
-    return h+'<p class="muted">Aucun client pour le moment. Ils apparaissent ici dès qu’ils créent un compte.</p>';
+    return h+'<p class="muted">Personne pour le moment. Les comptes apparaissent ici dès qu’ils sont créés.</p>';
   }
   h+='<ul class="plist">'+db.patients.map(function(p){
     var jours=[];
@@ -761,7 +761,7 @@ function patientPageHtml(){
   var p=getPatient(ui.pid);
   if(!p){ ui.aview='sessions'; return sessionsHtml(); }
   var ss=db.sessions.filter(function(x){return x.patientId===p.id;});
-  return '<button class="back" type="button" data-a="tab-s">‹ Tous mes clients</button>'+
+  return '<button class="back" type="button" data-a="tab-s">‹ Retour à la liste</button>'+
     '<div class="bar"><h2>'+esc(p.name)+'</h2>'+
     '<button class="btn small" type="button" data-a="new" data-p="'+p.id+'">Ajouter une séance</button></div>'+
     (p.email?'<p class="meta">'+esc(p.email)+'</p>':'')+
@@ -778,7 +778,7 @@ function exercisesHtml(){
     '<div class="grid2"><label class="field" for="nx-name">Nom<input id="nx-name" name="name" type="text" maxlength="60"></label>'+
     '<label class="field" for="nx-cat">Catégorie<select id="nx-cat" name="cat">'+CATS.map(function(c){return '<option'+(c===ui.exCat?' selected':'')+'>'+c+'</option>';}).join('')+'</select></label></div>'+
     '<div class="grid2"><label class="field" for="nx-unit">Se mesure en<select id="nx-unit" name="unit"><option value="reps">Répétitions</option><option value="sec">Secondes tenues</option></select></label><span></span></div>'+
-    '<label class="field" for="nx-cue">Consigne affichée au client<textarea id="nx-cue" name="cue" maxlength="300"></textarea></label>'+
+    '<label class="field" for="nx-cue">Consigne affichée pendant l’exercice<textarea id="nx-cue" name="cue" maxlength="300"></textarea></label>'+
     (ui.exErr?'<p class="err" role="alert">'+esc(ui.exErr)+'</p>':'')+
     '<div><button class="btn small" type="submit">Ajouter à la bibliothèque</button></div></form>';
   h+=shown.length?'<div class="exgrid">'+shown.map(function(ex){
@@ -788,7 +788,7 @@ function exercisesHtml(){
       '<div class="exc-vid">'+(v?'<video src="'+v+'" muted loop playsinline controls></video>':'<p class="muted small">Pas encore de vidéo</p>')+'</div>'+
       exEquipHtml(ex)+'<div><input id="vf-'+ex.id+'" class="vfile" type="file" accept="video/*" data-e="'+ex.id+'"><label class="btn sec small" for="vf-'+ex.id+'">'+(v?'Remplacer la vidéo':'Ajouter une vidéo')+'</label></div></article>';
   }).join('')+'</div>':'<p class="muted">Aucun exercice dans cet onglet. Ajoute-en un avec le formulaire ci-dessus.</p>';
-  h+='<p class="muted small">Les vidéos sont enregistrées sur le serveur et visibles par tes clients dans leurs séances.</p>';
+  h+='<p class="muted small">Les vidéos sont enregistrées sur le serveur et visibles dans les séances des personnes qui ont un compte.</p>';
   return h;
 }
 
@@ -810,8 +810,8 @@ function editorHtml(){
   var eqLine='<p class="meta">Matériel à la maison : <strong>'+(pp&&pp.equipment&&pp.equipment.length?pp.equipment.map(esc).join(', '):'non renseigné')+'</strong></p>';
   var have=(pp&&pp.equipment||[]).map(function(x){return x.toLowerCase();});
   var miss=sessEquip(s).filter(function(x){return have.indexOf(x.toLowerCase())<0;});
-  var warnLine=miss.length?'<p class="warnline">À vérifier : le client n’a pas indiqué '+miss.map(esc).join(', ')+'.</p>':'';
-  var opts=db.patients.length?db.patients.map(function(p){return '<option value="'+p.id+'"'+(p.id===s.patientId?' selected':'')+'>'+esc(p.name)+'</option>';}).join(''):'<option value="">Aucun client</option>';
+  var warnLine=miss.length?'<p class="warnline">À vérifier : cette personne n’a pas indiqué '+miss.map(esc).join(', ')+'.</p>':'';
+  var opts=db.patients.length?db.patients.map(function(p){return '<option value="'+p.id+'"'+(p.id===s.patientId?' selected':'')+'>'+esc(p.name)+'</option>';}).join(''):'<option value="">À qui ?</option>';
   var chips=s.dates.map(function(d){
     return '<span class="chip dchip">'+esc(fmtShort.format(parse(d)))+'<button type="button" data-a="ed-rmdate" data-d="'+d+'" aria-label="Retirer le '+esc(fmtLong.format(parse(d)))+'">✕</button></span>';
   }).join('');
@@ -925,7 +925,7 @@ function addDate(){
 }
 function saveEdit(){
   var s=ui.edit,i;
-  if(!s.patientId){ui.edErr='Choisis un client.';render();return;}
+  if(!s.patientId){ui.edErr='Choisis la personne concernée.';render();return;}
   if(!s.title.trim()){ui.edErr='Donne un titre à la séance.';render();return;}
   if(!s.dates.length){ui.edErr='Ajoute au moins une date.';render();return;}
   if(!s.items.length){ui.edErr='Choisis au moins un exercice.';render();return;}
