@@ -72,12 +72,14 @@ visiteurs vers cet agenda.
 | Base | Intérêt légitime au bon fonctionnement et à la sécurité du site |
 | Durée de conservation | Quelques semaines, selon les pratiques de l'hébergeur |
 | Destinataires | Sous-traitant : Netlify, Inc. |
-| Transfert à l'étranger | États-Unis — à documenter précisément avec Netlify avant mise à jour du registre |
+| Transfert à l'étranger | États-Unis, couvert par les clauses contractuelles types du contrat de traitement des données de Netlify, reconnues par le PFPDT. Si Netlify est certifié au Swiss-U.S. Data Privacy Framework, le transfert relève en outre de la décision d'adéquation du Conseil fédéral du 15 septembre 2024. |
+| Portée | Journaux techniques uniquement. Les données des comptes de l'espace coaching ne transitent pas par Netlify : le navigateur s'adresse directement à Supabase. |
 | Mesures de sécurité | HTTPS ; en-têtes de sécurité définis dans netlify.toml |
 
 ## Points à revoir
 
-- Documenter la base du transfert vers les États-Unis pour Netlify (clauses contractuelles types ou cadre de protection des données Suisse–États-Unis).
+- Télécharger le contrat de traitement des données de Netlify depuis le tableau de bord et en conserver une copie datée avec ce registre.
+- Vérifier sur dataprivacyframework.gov si Netlify figure parmi les entreprises certifiées au Swiss-U.S. Data Privacy Framework, et le noter ici le cas échéant.
 - Ajouter dans l'espace coaching une fonction de suppression de compte, aujourd'hui faite à la main en base.
 
 ## En cas de violation de données
