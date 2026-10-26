@@ -201,6 +201,25 @@ button.cell{cursor:pointer}
 .bar h2{font:700 1.65rem var(--font-display)}
 .pcard,.panel,.excard{display:grid;gap:12px;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:3px;align-content:start}
 .p-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.plist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.prow{appearance:none;width:100%;display:grid;
+  grid-template-columns:auto 1fr auto;align-items:center;
+  gap:2px 12px;padding:14px 16px;text-align:left;cursor:pointer;
+  background:var(--surface);border:1px solid var(--line);border-radius:3px;color:var(--fg)}
+/* Pastille : verte si une séance est programmée, rouge sinon.
+   L'état est aussi écrit en toutes lettres, la couleur seule ne suffit pas. */
+.pr-dot{grid-column:1;grid-row:1 / span 3;width:11px;height:11px;border-radius:50%}
+.pr-dot.ok{background:#1E8A5F}
+.pr-dot.no{background:#C0392B}
+.pr-name{grid-column:2;font:700 1.2rem/1.2 var(--font-display)}
+.pr-mail{grid-column:2;color:var(--muted);font-size:.9rem;overflow-wrap:anywhere}
+.pr-state{grid-column:2;color:var(--muted);font-size:.85rem}
+.pr-go{grid-column:3;grid-row:1 / span 3;font-size:1.5rem;color:var(--accent-ink);line-height:1}
+@media (hover:hover){.prow:hover{border-color:var(--accent)}}
+.prow:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.back{appearance:none;justify-self:start;padding:8px 0;border:0;background:transparent;
+  color:var(--accent-ink);font:500 .95rem var(--font-body);cursor:pointer}
+.back:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .pcard h3,.panel h3,.excard h3{font:700 1.35rem/1.15 var(--font-display)}
 .srow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line)}
 .s-main{display:grid;gap:2px;min-width:0}
@@ -399,7 +418,7 @@ function oops(e, quoi){
 /* ---------- Lecture ---------- */
 function toPatient(r){
   var n = ((r.prenom||'') + ' ' + (r.nom||'')).trim();
-  return {id:r.id, name:n||'Patient', email:'', equipment:r.materiel||[], role:r.role};
+  return {id:r.id, name:n||'Patient', email:r.email||'', equipment:r.materiel||[], role:r.role};
 }
 function toExercise(r){
   return {id:r.id, name:r.nom, cat:r.categorie, unit:r.unite==='sec'?'sec':'reps',
@@ -529,7 +548,7 @@ function sbUploadVideo(exId, file){
     });
 }
 
-var ui={pview:'seances',exCat:CATS[0],sel:todayIso,cal:firstOfMonth(new Date()),aview:'sessions',edit:null,cat:'Tous',newDate:todayIso,err:'',edErr:'',lf:{},confirmDel:null,loginTab:'in'};
+var ui={pview:'seances',pid:null,exCat:CATS[0],sel:todayIso,cal:firstOfMonth(new Date()),aview:'sessions',edit:null,cat:'Tous',newDate:todayIso,err:'',edErr:'',lf:{},confirmDel:null,loginTab:'in'};
 var $app=document.getElementById('app'),$run=document.getElementById('runner'),$toast=document.getElementById('toast');
 
 function EX(id){
@@ -656,7 +675,9 @@ function dayHtml(pid){
 function adminHtml(){
   if(ui.aview==='edit'&&ui.edit)return '<main class="app wide">'+editorHtml()+'</main>';
   function onglet(vue, action, libelle){
-    var actif = ui.aview === vue;
+    // La page d'un patient reste sous l'onglet Séances.
+    var actif = (vue==='sessions') ? (ui.aview==='sessions' || ui.aview==='patient')
+                                   : (ui.aview === vue);
     return '<button class="tab'+(actif?' on':'')+'" type="button" data-a="'+action+'"'+
            (actif?' aria-current="page"':'')+'>'+libelle+'</button>';
   }
@@ -666,6 +687,7 @@ function adminHtml(){
     onglet('breath','tab-b','Respiration')+'</nav>';
   var corps = ui.aview==='exercises' ? exercisesHtml()
             : ui.aview==='breath'    ? breathHtml()
+            : ui.aview==='patient'   ? patientPageHtml()
             : sessionsHtml();
   return '<main class="app wide">'+tabs+corps+'</main>';
 }
@@ -708,16 +730,42 @@ function equipHtml(p){
     '<form class="row" data-form="equip" data-p="'+p.id+'" novalidate><input type="text" name="item" maxlength="40" placeholder="Ajouter un matériel" aria-label="Ajouter un matériel pour '+esc(p.name)+'"><button class="btn sec small" type="submit">Ajouter</button></form>'+
     (sugg?'<div class="chips">'+sugg+'</div>':'')+'</div>';
 }
+/* Liste des comptes patients. Un clic ouvre la page du patient. */
 function sessionsHtml(){
-  var h='<div class="bar"><h2>Séances par patient</h2><button class="btn small" type="button" data-a="new">Nouvelle séance</button></div>';
-  db.patients.forEach(function(p){
-    var ss=db.sessions.filter(function(s){return s.patientId===p.id;});
-    h+='<section class="pcard"><div class="p-top"><div><h3>'+esc(p.name)+'</h3><p class="meta">'+esc(p.email)+'</p></div>'+
-      '<button class="btn sec small" type="button" data-a="new" data-p="'+p.id+'">Ajouter une séance</button></div>'+
-      equipHtml(p)+(ss.length?ss.map(sessRow).join(''):'<p class="muted">Aucune séance assignée.</p>')+'</section>';
-  });
-  if(!db.patients.length)h+='<p class="muted">Aucun patient pour le moment. Ils apparaissent ici dès qu’ils créent un compte.</p>';
+  var h='<div class="bar"><h2>Mes patients</h2><p class="meta">'+plural(db.patients.length,'compte')+'</p></div>';
+  if(!db.patients.length){
+    return h+'<p class="muted">Aucun patient pour le moment. Ils apparaissent ici dès qu’ils créent un compte.</p>';
+  }
+  h+='<ul class="plist">'+db.patients.map(function(p){
+    var jours=[];
+    db.sessions.forEach(function(x){ if(x.patientId===p.id) jours=jours.concat(x.dates); });
+    var prochains=jours.filter(function(d){return d>=todayIso;}).sort();
+    var ok=prochains.length>0;
+    var etat=ok ? 'Prochaine séance le '+fmtShort.format(parse(prochains[0]))
+                : 'Aucune séance programmée';
+    return '<li><button class="prow" type="button" data-a="open-p" data-p="'+p.id+'">'+
+      '<span class="pr-dot '+(ok?'ok':'no')+'" aria-hidden="true"></span>'+
+      '<span class="pr-name">'+esc(p.name)+'</span>'+
+      '<span class="pr-mail">'+esc(p.email)+'</span>'+
+      '<span class="pr-state">'+esc(etat)+'</span>'+
+      '<span class="pr-go" aria-hidden="true">›</span></button></li>';
+  }).join('')+'</ul>';
   return h;
+}
+
+/* Page d'un patient : son matériel et ses séances. */
+function patientPageHtml(){
+  var p=getPatient(ui.pid);
+  if(!p){ ui.aview='sessions'; return sessionsHtml(); }
+  var ss=db.sessions.filter(function(x){return x.patientId===p.id;});
+  return '<button class="back" type="button" data-a="tab-s">‹ Tous mes patients</button>'+
+    '<div class="bar"><h2>'+esc(p.name)+'</h2>'+
+    '<button class="btn small" type="button" data-a="new" data-p="'+p.id+'">Ajouter une séance</button></div>'+
+    (p.email?'<p class="meta">'+esc(p.email)+'</p>':'')+
+    '<section class="pcard">'+equipHtml(p)+'</section>'+
+    '<section class="pcard"><h3>Séances</h3>'+
+    (ss.length?ss.map(sessRow).join(''):'<p class="muted">Aucune séance assignée. Utilise « Ajouter une séance » ci-dessus.</p>')+
+    '</section>';
 }
 function exercisesHtml(){
   var shown=db.exercises.filter(function(x){return x.cat===ui.exCat;});
@@ -883,7 +931,7 @@ function saveEdit(){
   sbSaveSession(s).then(function(){
     return loadAll();
   }).then(function(){
-    ui.aview='sessions';ui.edit=null;ui.edErr='';nav();toast('Séance enregistrée');
+    ui.aview=ui.pid?'patient':'sessions';ui.edit=null;ui.edErr='';nav();toast('Séance enregistrée');
   }).catch(function(e){
     console.error(e);
     ui.edErr='La séance n’a pas pu être enregistrée. Vérifie ta connexion.';render();
@@ -904,7 +952,8 @@ $app.addEventListener('click',function(e){
     case 'cal-next':ui.cal=new Date(ui.cal.getFullYear(),ui.cal.getMonth()+1,1);render();break;
     case 'day':ui.sel=d.d;render();break;
     case 'start':startRun(d.s,ui.sel);break;
-    case 'tab-s':ui.aview='sessions';ui.confirmDel=null;nav();break;
+    case 'tab-s':ui.aview='sessions';ui.pid=null;ui.confirmDel=null;nav();break;
+    case 'open-p':ui.pid=d.p;ui.aview='patient';ui.confirmDel=null;nav();break;
     case 'ptab-s':ui.pview='seances';render();break;
     case 'ptab-b':ui.pview='breath';render();break;
     case 'btog':bp[d.k]=!bp[d.k];bsave();render();if(d.k==='sound'&&bp.sound){ensureAudio();tone(523,.3,.1);}if(d.k==='vibe'&&bp.vibe)bbuzz(40);break;
@@ -913,8 +962,8 @@ $app.addEventListener('click',function(e){
     case 'eq-add':addEquip(d.p,d.v);break;
     case 'eq-rm':removeEquip(d.p,+d.i);break;
     case 'ex-cat':ui.exCat=d.c;render();break;
-    case 'tab-e':ui.aview='exercises';ui.exErr='';nav();break;
-    case 'tab-b':ui.aview='breath';nav();break;
+    case 'tab-e':ui.aview='exercises';ui.pid=null;ui.exErr='';nav();break;
+    case 'tab-b':ui.aview='breath';ui.pid=null;nav();break;
     case 'new':openEditor(null,d.p);break;
     case 'edit':openEditor(d.s);break;
     case 'del':
@@ -927,7 +976,7 @@ $app.addEventListener('click',function(e){
       }
       else ui.confirmDel=d.s;
       render();break;
-    case 'ed-back':ui.aview='sessions';ui.edit=null;nav();break;
+    case 'ed-back':ui.aview=ui.pid?'patient':'sessions';ui.edit=null;nav();break;
     case 'ed-cat':ui.cat=d.c;render();break;
     case 'ed-toggle':toggleEx(d.e);ui.edErr='';render();break;
     case 'ed-up':move(+d.i,-1);render();break;

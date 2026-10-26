@@ -13,6 +13,9 @@ create table if not exists public.profils (
   id         uuid primary key references auth.users (id) on delete cascade,
   prenom     text not null default '',
   nom        text not null default '',
+  -- Recopiée depuis le compte, pour que l'administrateur voie à qui il
+  -- a affaire sans avoir accès à la table des comptes.
+  email      text not null default '',
   role       text not null default 'patient' check (role in ('patient', 'admin')),
   materiel   text[] not null default '{}',
   cree_le    timestamptz not null default now()
@@ -26,11 +29,12 @@ security definer
 set search_path = ''
 as $$
 begin
-  insert into public.profils (id, prenom, nom)
+  insert into public.profils (id, prenom, nom, email)
   values (
     new.id,
     coalesce(new.raw_user_meta_data ->> 'prenom', ''),
-    coalesce(new.raw_user_meta_data ->> 'nom', '')
+    coalesce(new.raw_user_meta_data ->> 'nom', ''),
+    coalesce(new.email, '')
   )
   on conflict (id) do nothing;
   return new;
@@ -58,6 +62,14 @@ as $$
   );
 $$;
 
+alter table public.profils add column if not exists email text not null default '';
+
+-- Rattrape les comptes créés avant l'ajout de la colonne.
+update public.profils p
+set email = u.email
+from auth.users u
+where u.id = p.id and p.email = '' and u.email is not null;
+
 -- Un patient peut corriger son prénom et son nom, mais ni se déclarer
 -- administrateur, ni s'attribuer du matériel : ces deux colonnes ne
 -- changent que si c'est l'administrateur qui écrit.
@@ -73,6 +85,7 @@ begin
   if auth.uid() is not null and not public.est_admin() then
     new.role := old.role;
     new.materiel := old.materiel;
+    new.email := old.email;
     new.id := old.id;
   end if;
   return new;
