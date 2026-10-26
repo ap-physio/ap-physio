@@ -93,9 +93,17 @@ create table if not exists public.exercices (
                'Mobilité / stretching', 'Tronc')),
   consigne   text not null default '',
   materiel   text[] not null default '{}',
+  -- 'reps' : un nombre de répétitions. 'sec' : une durée à tenir.
+  unite      text not null default 'reps' check (unite in ('reps', 'sec')),
+  -- Secondes par répétition, pour estimer la durée d'une séance.
+  tempo      integer not null default 4 check (tempo between 1 and 30),
   video      text,
   cree_le    timestamptz not null default now()
 );
+
+-- Colonnes ajoutées après coup, si la table existait déjà.
+alter table public.exercices add column if not exists unite text not null default 'reps';
+alter table public.exercices add column if not exists tempo integer not null default 4;
 
 do $$
 begin
@@ -117,8 +125,12 @@ create table if not exists public.seances (
   patient_id uuid not null references public.profils (id) on delete cascade,
   titre      text not null default 'Séance',
   note       text not null default '',
+  -- Repos entre deux exercices, en secondes.
+  repos_exercice integer not null default 30 check (repos_exercice between 0 and 600),
   cree_le    timestamptz not null default now()
 );
+
+alter table public.seances add column if not exists repos_exercice integer not null default 30;
 
 create index if not exists seances_patient_idx on public.seances (patient_id);
 
@@ -128,10 +140,21 @@ create table if not exists public.seance_exercices (
   exercice_id    uuid not null references public.exercices (id) on delete restrict,
   position       integer not null default 0,
   series         integer not null default 3  check (series between 1 and 20),
-  repetitions    integer not null default 10 check (repetitions between 1 and 200),
-  repos_series   integer not null default 30 check (repos_series between 0 and 600),
-  repos_exercice integer not null default 60 check (repos_exercice between 0 and 600)
+  -- Nombre de répétitions, ou nombre de secondes selon l'unité de l'exercice.
+  valeur         integer not null default 12 check (valeur between 1 and 300),
+  -- Repos entre deux séries, en secondes.
+  repos          integer not null default 45 check (repos between 0 and 600)
 );
+
+alter table public.seance_exercices add column if not exists valeur integer not null default 12;
+alter table public.seance_exercices add column if not exists repos  integer not null default 45;
+alter table public.seance_exercices drop column if exists repetitions;
+alter table public.seance_exercices drop column if exists repos_series;
+alter table public.seance_exercices drop column if exists repos_exercice;
+
+-- Un exercice n'apparaît qu'une fois par séance.
+create unique index if not exists seance_exercices_unique
+  on public.seance_exercices (seance_id, exercice_id);
 
 create index if not exists seance_exercices_seance_idx
   on public.seance_exercices (seance_id, position);

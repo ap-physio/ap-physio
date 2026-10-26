@@ -8,6 +8,7 @@
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#121211">
 <link rel="manifest" href="/manifest.webmanifest">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <link rel="icon" type="image/png" href="/assets/favicon-coaching.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -160,8 +161,6 @@ textarea{min-height:76px;resize:vertical}
 .segb{appearance:none;border:0;background:transparent;color:var(--muted);min-height:44px;font:600 .95rem var(--font-body);cursor:pointer}
 .segb.on{background:var(--accent);color:var(--on-accent)}
 .lform{display:grid;gap:12px}
-.demo{display:grid;gap:10px;margin-top:8px;padding-top:16px;border-top:1px solid var(--line)}
-.demo-btns{display:grid;gap:8px}
 
 /* Patient */
 .hello{font:700 clamp(1.8rem,8vw,2.4rem)/1.05 var(--font-display);letter-spacing:-.01em}
@@ -356,19 +355,7 @@ function fmtDur(sec){if(sec<60)return sec+' s';return Math.round(sec/60)+' min';
 
 var KEY='ap-seances-proto-v1';
 var CATS=['Membre supérieur','Membre inférieur','Mobilité / stretching','Tronc'];
-var EXEQ_ID={e1:['Tapis'],e3:['Tapis'],e5:['Élastiques'],e7:['Tapis'],e9:['Tapis'],e10:['Tapis'],e11:['Tapis']};
-var EQ_ID={p1:['Élastiques','Tapis'],p2:['Haltères','Banc']};
 var EQUIP=['Élastiques','Haltères','Kettlebell','Tapis','Banc','Barre de traction','Swiss ball','Rouleau de massage'];
-var CAT_ID={e1:CATS[1],e2:CATS[1],e3:CATS[3],e4:CATS[1],e5:CATS[0],e6:CATS[2],e7:CATS[2],e8:CATS[2],e9:CATS[2],e10:CATS[2],e11:CATS[2],e12:CATS[1]};
-function migrate(d){
-  d.exercises.forEach(function(ex){
-    if(CATS.indexOf(ex.cat)<0)ex.cat=CAT_ID[ex.id]||(ex.cat==='Renforcement'?CATS[1]:CATS[2]);
-    if(ex.id==='e3'&&ex.name==='Gainage planche'&&ex.cat===CATS[0])ex.cat=CATS[3];
-    if(!Array.isArray(ex.equip))ex.equip=(EXEQ_ID[ex.id]||[]).slice();
-  });
-  d.patients.forEach(function(p){if(!Array.isArray(p.equipment))p.equipment=(EQ_ID[p.id]||[]).slice();});
-  return d;
-}
 function pad(n){return String(n).padStart(2,'0');}
 function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
 function parse(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
@@ -382,52 +369,166 @@ var fmtLong=new Intl.DateTimeFormat('fr-CH',{weekday:'long',day:'numeric',month:
 var fmtMonth=new Intl.DateTimeFormat('fr-CH',{month:'long',year:'numeric'});
 var fmtShort=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'});
 var todayIso=iso(new Date());
-
-function seed(){return migrate(seed0());}
-function seed0(){
-  var t=new Date();
-  return {
-    auth:null,
-    patients:[
-      {id:'p1',name:'Camille',email:'camille@exemple.ch'},
-      {id:'p2',name:'Marc',email:'marc@exemple.ch'}
-    ],
-    exercises:[
-      {id:'e1',name:'Pont fessier',cat:'Renforcement',unit:'reps',tempo:4,cue:'Pieds à plat, genoux pliés. Monte le bassin sans creuser le bas du dos et marque une pause en haut.'},
-      {id:'e2',name:'Squat au mur',cat:'Renforcement',unit:'sec',tempo:0,cue:'Dos plaqué au mur, genoux au-dessus des chevilles. Tiens la position.'},
-      {id:'e3',name:'Gainage planche',cat:'Renforcement',unit:'sec',tempo:0,cue:'Avant-bras au sol, corps aligné de la tête aux talons. Respire calmement.'},
-      {id:'e4',name:'Fente arrière',cat:'Renforcement',unit:'reps',tempo:4,cue:'Recule un pied, descends en gardant le buste droit, puis remonte en poussant dans la jambe avant.'},
-      {id:'e5',name:'Rowing avec élastique',cat:'Renforcement',unit:'reps',tempo:4,cue:'Tire vers ta taille en serrant les omoplates, puis reviens lentement.'},
-      {id:'e6',name:'Étirement des ischio-jambiers',cat:'Étirement',unit:'sec',tempo:0,cue:'Jambe tendue devant toi, penche le buste vers l’avant en gardant le dos long. Étirement doux.'},
-      {id:'e7',name:'Étirement du psoas',cat:'Étirement',unit:'sec',tempo:0,cue:'Genou au sol, pousse doucement le bassin vers l’avant. Garde le buste droit.'},
-      {id:'e8',name:'Étirement des mollets',cat:'Étirement',unit:'sec',tempo:0,cue:'Mains au mur, jambe arrière tendue, talon au sol. Avance le bassin vers le mur.'},
-      {id:'e9',name:'Rotation thoracique',cat:'Mobilité',unit:'reps',tempo:4,cue:'À quatre pattes, une main derrière la tête. Ouvre le coude vers le plafond puis reviens.'},
-      {id:'e10',name:'Mobilité de hanche 90/90',cat:'Mobilité',unit:'reps',tempo:4,cue:'Assis, genoux à 90°. Fais pivoter les genoux d’un côté à l’autre sans aide des mains.'},
-      {id:'e11',name:'Chat-vache',cat:'Mobilité',unit:'reps',tempo:4,cue:'À quatre pattes, arrondis puis creuse le dos en suivant ta respiration.'},
-      {id:'e12',name:'Montées sur pointes',cat:'Renforcement',unit:'reps',tempo:3,cue:'Debout, monte sur la pointe des pieds, marque une pause, puis redescends lentement.'}
-    ],
-    sessions:[
-      {id:'s1',patientId:'p1',title:'Séance A',dates:[iso(addDays(t,-2)),iso(t),iso(addDays(t,3))],exRest:30,items:[
-        {exId:'e1',sets:3,value:12,rest:45},{exId:'e2',sets:3,value:30,rest:45},{exId:'e4',sets:3,value:10,rest:45},{exId:'e6',sets:2,value:30,rest:20}]},
-      {id:'s2',patientId:'p1',title:'Séance B',dates:[iso(addDays(t,1)),iso(addDays(t,5))],exRest:20,items:[
-        {exId:'e9',sets:2,value:10,rest:20},{exId:'e10',sets:2,value:8,rest:20},{exId:'e11',sets:2,value:10,rest:15},{exId:'e7',sets:2,value:30,rest:15}]},
-      {id:'s3',patientId:'p2',title:'Séance A',dates:[iso(t),iso(addDays(t,2))],exRest:30,items:[
-        {exId:'e3',sets:3,value:30,rest:30},{exId:'e5',sets:3,value:12,rest:45},{exId:'e12',sets:3,value:15,rest:30},{exId:'e8',sets:2,value:30,rest:15}]}
-    ],
-    done:(function(){var o={};o['s1|'+iso(addDays(t,-2))]=true;return o;})()
-  };
+var SB_URL = 'https://yqnoencfedoxgzrgpmbf.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlxbm9lbmNmZWRveGd6cmdwbWJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMzk3MTYsImV4cCI6MjEwODYxNTcxNn0.hEuAqIalEbtTBBbyM0xo3OHphL4h8s-CWD9GETKTR0E';
+if(!window.supabase || !window.supabase.createClient){
+  document.getElementById('app').innerHTML =
+    '<main class="login">' +
+      '<h1>Connexion impossible</h1>' +
+      '<p class="muted lede">L’application n’a pas pu se charger complètement. ' +
+      'Vérifie ta connexion internet, puis recharge la page.</p>' +
+    '</main>';
+  return;
 }
-function load(){
-  try{
-    var r=localStorage.getItem(KEY);
-    if(r){var d=JSON.parse(r);if(d&&d.patients&&d.exercises&&d.sessions&&d.done)return migrate(d);}
-  }catch(e){}
-  return seed();
-}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){}}
+var sb = window.supabase.createClient(SB_URL, SB_KEY, {
+  auth: {persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}
+});
 
-var db=load();
-var videos={};
+var db = {auth:null, patients:[], exercises:[], sessions:[], done:{}};
+var videos = {};
+
+/* Les écritures partent vers Supabase au moment de chaque action :
+   save() ne sert plus qu'à garder les anciens appels sans effet. */
+function save(){}
+
+function oops(e, quoi){
+  console.error(quoi, e);
+  toast(quoi + ' n’a pas pu être enregistré.');
+}
+
+/* ---------- Lecture ---------- */
+function toPatient(r){
+  var n = ((r.prenom||'') + ' ' + (r.nom||'')).trim();
+  return {id:r.id, name:n||'Patient', email:'', equipment:r.materiel||[], role:r.role};
+}
+function toExercise(r){
+  return {id:r.id, name:r.nom, cat:r.categorie, unit:r.unite==='sec'?'sec':'reps',
+          tempo:r.tempo||4, cue:r.consigne||'', equip:r.materiel||[], video:r.video||null};
+}
+
+function loadAll(){
+  return Promise.all([
+    sb.from('profils').select('*').order('prenom'),
+    sb.from('exercices').select('*').order('nom'),
+    sb.from('seances').select('*').order('cree_le'),
+    sb.from('seance_exercices').select('*').order('position'),
+    sb.from('seance_dates').select('*')
+  ]).then(function(r){
+    r.forEach(function(x){ if(x.error) throw x.error; });
+    // L'administrateur ne figure pas dans sa propre liste de patients.
+    db.patients  = r[0].data.filter(function(x){return x.role !== 'admin';}).map(toPatient);
+    db.moi       = (r[0].data.filter(function(x){return x.role === 'admin';})[0] || null);
+    db.exercises = r[1].data.map(toExercise);
+    var byId = {};
+    db.sessions = r[2].data.map(function(x){
+      var o = {id:x.id, patientId:x.patient_id, title:x.titre, note:x.note||'',
+               exRest:x.repos_exercice, dates:[], items:[]};
+      byId[x.id] = o; return o;
+    });
+    r[3].data.forEach(function(it){
+      var o = byId[it.seance_id];
+      if(o) o.items.push({exId:it.exercice_id, sets:it.series, value:it.valeur, rest:it.repos});
+    });
+    db.done = {};
+    r[4].data.forEach(function(d){
+      var o = byId[d.seance_id];
+      if(!o) return;
+      if(o.dates.indexOf(d.jour) < 0) o.dates.push(d.jour);
+      if(d.faite) db.done[d.seance_id + '|' + d.jour] = true;
+    });
+    db.sessions.forEach(function(o){ o.dates.sort(); });
+    return loadVideos();
+  });
+}
+
+/* Les vidéos sont dans un dossier privé : il faut une adresse signée,
+   valable deux heures, pour les lire. */
+function loadVideos(){
+  var paths = db.exercises.filter(function(e){return e.video;}).map(function(e){return e.video;});
+  if(!paths.length) return Promise.resolve();
+  return sb.storage.from('videos').createSignedUrls(paths, 7200).then(function(r){
+    if(r.error) return;
+    (r.data||[]).forEach(function(x){
+      var ex = db.exercises.filter(function(e){return e.video === x.path;})[0];
+      if(ex && x.signedUrl) videos[ex.id] = x.signedUrl;
+    });
+  }).catch(function(){});
+}
+
+/* ---------- Écriture ---------- */
+function sbPatientEquip(p){
+  sb.from('profils').update({materiel:p.equipment}).eq('id', p.id)
+    .then(function(r){ if(r.error) oops(r.error, 'Le matériel'); });
+}
+function sbExerciceEquip(ex){
+  sb.from('exercices').update({materiel:ex.equip}).eq('id', ex.id)
+    .then(function(r){ if(r.error) oops(r.error, 'Le matériel'); });
+}
+function sbSetDone(sid, jour){
+  sb.from('seance_dates').update({faite:true}).eq('seance_id', sid).eq('jour', jour)
+    .then(function(r){ if(r.error) oops(r.error, 'La séance faite'); });
+}
+function sbDeleteSession(sid){
+  return sb.from('seances').delete().eq('id', sid).then(function(r){
+    if(r.error) throw r.error;
+  });
+}
+function sbSaveSession(s){
+  var row = {patient_id:s.patientId, titre:s.title, repos_exercice:s.exRest};
+  var q = s.id
+    ? sb.from('seances').update(row).eq('id', s.id).select('id').single()
+    : sb.from('seances').insert(row).select('id').single();
+  return q.then(function(r){
+    if(r.error) throw r.error;
+    var id = r.data.id;
+    s.id = id;
+    return sb.from('seance_exercices').delete().eq('seance_id', id).then(function(){
+      return sb.from('seance_exercices').insert(s.items.map(function(it, i){
+        return {seance_id:id, exercice_id:it.exId, position:i,
+                series:it.sets, valeur:it.value, repos:it.rest};
+      }));
+    }).then(function(){
+      return sb.from('seance_dates').delete().eq('seance_id', id).eq('faite', false);
+    }).then(function(){
+      return sb.from('seance_dates').upsert(
+        s.dates.map(function(j){ return {seance_id:id, jour:j}; }),
+        {onConflict:'seance_id,jour', ignoreDuplicates:true}
+      );
+    }).then(function(r2){
+      if(r2 && r2.error) throw r2.error;
+      return id;
+    });
+  });
+}
+function sbCreateExercise(ex){
+  return sb.from('exercices').insert({
+    nom:ex.name, categorie:ex.cat, unite:ex.unit, tempo:ex.tempo,
+    consigne:ex.cue, materiel:ex.equip
+  }).select('*').single().then(function(r){
+    if(r.error) throw r.error;
+    return toExercise(r.data);
+  });
+}
+function sbUploadVideo(exId, file){
+  var ex = findEx(exId);
+  if(!ex) return Promise.reject(new Error('exercice inconnu'));
+  var m = (file.name.match(/\.([a-z0-9]+)$/i) || [null,'mp4'])[1].toLowerCase();
+  var path = exId + '.' + m;
+  return sb.storage.from('videos').upload(path, file, {upsert:true, contentType:file.type})
+    .then(function(r){
+      if(r.error) throw r.error;
+      return sb.from('exercices').update({video:path}).eq('id', exId);
+    })
+    .then(function(r){
+      if(r.error) throw r.error;
+      ex.video = path;
+      return sb.storage.from('videos').createSignedUrl(path, 7200);
+    })
+    .then(function(r){
+      if(r.data && r.data.signedUrl) videos[exId] = r.data.signedUrl;
+    });
+}
+
 var ui={pview:'seances',exCat:CATS[0],sel:todayIso,cal:firstOfMonth(new Date()),aview:'sessions',edit:null,cat:'Tous',newDate:todayIso,err:'',edErr:'',lf:{},confirmDel:null,loginTab:'in'};
 var $app=document.getElementById('app'),$run=document.getElementById('runner'),$toast=document.getElementById('toast');
 
@@ -477,15 +578,13 @@ function loginHtml(){
     '</div>'+
     '<form class="lform" data-form="'+(up?'signup':'login')+'" novalidate>'+
       (up?field('Prénom','text','name','given-name'):'')+
+      (up?field('Nom','text','lastname','family-name'):'')+
       field('E-mail','email','email','email')+
       field('Mot de passe','password','password',up?'new-password':'current-password')+
       (ui.err?'<p class="err" role="alert">'+esc(ui.err)+'</p>':'')+
+      (ui.info?'<p class="muted small" role="status">'+esc(ui.info)+'</p>':'')+
       '<button class="btn" type="submit">'+(up?'Créer mon compte':'Se connecter')+'</button>'+
     '</form>'+
-    '<div class="demo"><p class="eyebrow">Prototype</p>'+
-      '<p class="muted small">Aucune vérification réelle, les données restent dans ce navigateur. Essaie les deux espaces :</p>'+
-      '<div class="demo-btns"><button class="btn sec" type="button" data-a="demo-p">Voir comme patient</button>'+
-      '<button class="btn sec" type="button" data-a="demo-a">Voir comme administrateur</button></div></div>'+
   '</main>';
 }
 function headerHtml(){
@@ -629,8 +728,7 @@ function exercisesHtml(){
       '<div class="exc-vid">'+(v?'<video src="'+v+'" muted loop playsinline controls></video>':'<p class="muted small">Pas encore de vidéo</p>')+'</div>'+
       exEquipHtml(ex)+'<div><input id="vf-'+ex.id+'" class="vfile" type="file" accept="video/*" data-e="'+ex.id+'"><label class="btn sec small" for="vf-'+ex.id+'">'+(v?'Remplacer la vidéo':'Ajouter une vidéo')+'</label></div></article>';
   }).join('')+'</div>':'<p class="muted">Aucun exercice dans cet onglet. Ajoute-en un avec le formulaire ci-dessus.</p>';
-  h+='<p class="muted small">Les vidéos ajoutées ici servent à tester le prototype et disparaissent au rechargement de la page.</p>'+
-    '<div><button class="ghost" type="button" data-a="reset">Réinitialiser la démo</button></div>';
+  h+='<p class="muted small">Les vidéos sont enregistrées sur le serveur et visibles par tes patients dans leurs séances.</p>';
   return h;
 }
 
@@ -685,10 +783,27 @@ function updateEstimate(){
 }
 
 /* ---------- Actions ---------- */
-function signIn(role,pid){
-  db.auth={role:role,patientId:pid||null};
-  ui.sel=todayIso;ui.cal=firstOfMonth(new Date());ui.aview='sessions';ui.pview='seances';ui.edit=null;ui.err='';ui.lf={};
-  save();nav();
+function apresConnexion(user){
+  return loadAll().then(function(){
+    var estAdmin = !!(db.moi && db.moi.id === user.id);
+    db.auth = {userId:user.id, patientId:user.id, role:estAdmin ? 'admin' : 'patient'};
+    ui.sel=todayIso;ui.cal=firstOfMonth(new Date());ui.aview='sessions';ui.pview='seances';
+    ui.edit=null;ui.err='';ui.lf={};
+    nav();
+  });
+}
+function messageAuth(e){
+  var m = (e && e.message) || '';
+  if(/Invalid login/i.test(m)) return 'E-mail ou mot de passe incorrect.';
+  if(/already registered/i.test(m)) return 'Cet e-mail a déjà un compte. Connecte-toi.';
+  if(/Email not confirmed/i.test(m)) return 'Ouvre l’e-mail de confirmation avant de te connecter.';
+  if(/Password should be/i.test(m)) return 'Choisis un mot de passe d’au moins 6 caractères.';
+  if(/rate limit|too many/i.test(m)) return 'Trop de tentatives. Réessaie dans quelques minutes.';
+  return m || 'La connexion a échoué. Réessaie.';
+}
+function busy(on){
+  var b = $app.querySelector('form[data-form] button[type="submit"]');
+  if(b){ b.disabled = on; if(on) b.textContent = 'Un instant…'; }
 }
 function findEx(id){
   for(var i=0;i<db.exercises.length;i++)if(db.exercises[i].id===id)return db.exercises[i];
@@ -700,14 +815,14 @@ function toggleExEquip(id,v){
   ex.equip=ex.equip||[];
   ex.equip.forEach(function(y,k){if(y.toLowerCase()===String(v).toLowerCase())i=k;});
   if(i>-1)ex.equip.splice(i,1);else ex.equip.push(v);
-  save();render();
+  sbExerciceEquip(ex);render();
 }
 function addExEquip(id,v){
   var ex=findEx(id);v=String(v||'').trim();
   if(!ex||!v)return;
   ex.equip=ex.equip||[];
   if(ex.equip.some(function(y){return y.toLowerCase()===v.toLowerCase();}))return;
-  ex.equip.push(v);save();render();
+  ex.equip.push(v);sbExerciceEquip(ex);render();
 }
 function getPatient(id){
   for(var i=0;i<db.patients.length;i++)if(db.patients[i].id===id)return db.patients[i];
@@ -718,12 +833,12 @@ function addEquip(pid,v){
   if(!p||!v)return;
   p.equipment=p.equipment||[];
   if(p.equipment.some(function(x){return x.toLowerCase()===v.toLowerCase();}))return;
-  p.equipment.push(v);save();render();
+  p.equipment.push(v);sbPatientEquip(p);render();
 }
 function removeEquip(pid,i){
   var p=getPatient(pid);
   if(!p||!p.equipment)return;
-  p.equipment.splice(i,1);save();render();
+  p.equipment.splice(i,1);sbPatientEquip(p);render();
 }
 function openEditor(sid,pid){
   var s=null,i;
@@ -755,9 +870,15 @@ function saveEdit(){
   if(!s.dates.length){ui.edErr='Ajoute au moins une date.';render();return;}
   if(!s.items.length){ui.edErr='Choisis au moins un exercice.';render();return;}
   s.title=s.title.trim();
-  if(s.id){for(i=0;i<db.sessions.length;i++)if(db.sessions[i].id===s.id)db.sessions[i]=s;}
-  else{s.id='s'+Date.now();db.sessions.push(s);}
-  save();ui.aview='sessions';ui.edit=null;ui.edErr='';nav();toast('Séance enregistrée');
+  ui.edErr='Enregistrement…';render();
+  sbSaveSession(s).then(function(){
+    return loadAll();
+  }).then(function(){
+    ui.aview='sessions';ui.edit=null;ui.edErr='';nav();toast('Séance enregistrée');
+  }).catch(function(e){
+    console.error(e);
+    ui.edErr='La séance n’a pas pu être enregistrée. Vérifie ta connexion.';render();
+  });
 }
 
 $app.addEventListener('click',function(e){
@@ -765,10 +886,11 @@ $app.addEventListener('click',function(e){
   if(!b||b.disabled)return;
   var a=b.getAttribute('data-a'),d=b.dataset;
   switch(a){
-    case 'tab-login':ui.loginTab=d.t;ui.err='';render();break;
-    case 'demo-p':signIn('patient',db.patients[0]?db.patients[0].id:null);break;
-    case 'demo-a':signIn('admin',null);break;
-    case 'logout':db.auth=null;ui.edit=null;ui.aview='sessions';save();nav();break;
+    case 'tab-login':ui.loginTab=d.t;ui.err='';ui.info='';render();break;
+    case 'logout':
+      sb.auth.signOut().catch(function(){});
+      db.auth=null;db.patients=[];db.sessions=[];db.done={};videos={};
+      ui.edit=null;ui.aview='sessions';ui.lf={};ui.err='';nav();break;
     case 'cal-prev':ui.cal=new Date(ui.cal.getFullYear(),ui.cal.getMonth()-1,1);render();break;
     case 'cal-next':ui.cal=new Date(ui.cal.getFullYear(),ui.cal.getMonth()+1,1);render();break;
     case 'day':ui.sel=d.d;render();break;
@@ -786,7 +908,13 @@ $app.addEventListener('click',function(e){
     case 'new':openEditor(null,d.p);break;
     case 'edit':openEditor(d.s);break;
     case 'del':
-      if(ui.confirmDel===d.s){db.sessions=db.sessions.filter(function(s){return s.id!==d.s;});ui.confirmDel=null;save();toast('Séance supprimée');}
+      if(ui.confirmDel===d.s){
+        var sid=d.s;
+        db.sessions=db.sessions.filter(function(s){return s.id!==sid;});
+        ui.confirmDel=null;
+        sbDeleteSession(sid).then(function(){toast('Séance supprimée');})
+          .catch(function(e){oops(e,'La suppression');loadAll().then(render);});
+      }
       else ui.confirmDel=d.s;
       render();break;
     case 'ed-back':ui.aview='sessions';ui.edit=null;nav();break;
@@ -798,7 +926,6 @@ $app.addEventListener('click',function(e){
     case 'ed-adddate':addDate();break;
     case 'ed-rmdate':ui.edit.dates=ui.edit.dates.filter(function(x){return x!==d.d;});render();break;
     case 'ed-save':saveEdit();break;
-    case 'reset':{var au=db.auth;db=seed();db.auth=au;videos={};ui.confirmDel=null;save();nav();toast('Démo réinitialisée');break;}
   }
 });
 
@@ -828,9 +955,10 @@ $app.addEventListener('change',function(e){
   if(el.type==='file'){
     var f=el.files&&el.files[0],id=el.getAttribute('data-e');
     if(f&&id){
-      try{if(videos[id])URL.revokeObjectURL(videos[id]);}catch(x){}
-      videos[id]=URL.createObjectURL(f);
-      toast('Vidéo ajoutée');render();
+      toast('Envoi de la vidéo…');
+      sbUploadVideo(id,f)
+        .then(function(){toast('Vidéo ajoutée');render();})
+        .catch(function(e){oops(e,'La vidéo');});
     }
     return;
   }
@@ -842,18 +970,30 @@ $app.addEventListener('submit',function(e){
   e.preventDefault();
   var fd=new FormData(f),i;
   if(kind==='login'){
-    var em=String(fd.get('email')||'').trim().toLowerCase(),p=null;
-    for(i=0;i<db.patients.length;i++)if(db.patients[i].email.toLowerCase()===em)p=db.patients[i];
-    if(!p){ui.err='Aucun compte avec cet e-mail. Crée un compte ou essaie la démo.';render();return;}
-    signIn('patient',p.id);
+    var em=String(fd.get('email')||'').trim(), pw=String(fd.get('password')||'');
+    if(em.indexOf('@')<1){ui.err='Indique une adresse e-mail valide.';render();return;}
+    if(!pw){ui.err='Indique ton mot de passe.';render();return;}
+    ui.err='';ui.info='';busy(true);
+    sb.auth.signInWithPassword({email:em, password:pw}).then(function(r){
+      if(r.error) throw r.error;
+      return apresConnexion(r.data.user);
+    }).catch(function(e){ui.err=messageAuth(e);render();});
   }else if(kind==='signup'){
-    var nm=String(fd.get('name')||'').trim(),em2=String(fd.get('email')||'').trim(),pw=String(fd.get('password')||'');
+    var nm=String(fd.get('name')||'').trim(), ln=String(fd.get('lastname')||'').trim();
+    var em2=String(fd.get('email')||'').trim(), pw2=String(fd.get('password')||'');
     if(!nm){ui.err='Indique ton prénom.';render();return;}
     if(em2.indexOf('@')<1){ui.err='Indique une adresse e-mail valide.';render();return;}
-    if(pw.length<6){ui.err='Choisis un mot de passe d’au moins 6 caractères.';render();return;}
-    for(i=0;i<db.patients.length;i++)if(db.patients[i].email.toLowerCase()===em2.toLowerCase()){ui.err='Cet e-mail a déjà un compte. Connecte-toi.';render();return;}
-    var np={id:'p'+Date.now(),name:nm,email:em2,equipment:[]};
-    db.patients.push(np);signIn('patient',np.id);
+    if(pw2.length<6){ui.err='Choisis un mot de passe d’au moins 6 caractères.';render();return;}
+    ui.err='';ui.info='';busy(true);
+    sb.auth.signUp({email:em2, password:pw2, options:{data:{prenom:nm, nom:ln}}}).then(function(r){
+      if(r.error) throw r.error;
+      if(!r.data.session){
+        ui.loginTab='in';ui.err='';ui.lf={};
+        ui.info='Compte créé. Ouvre l’e-mail de confirmation que tu viens de recevoir, puis connecte-toi.';
+        render();return;
+      }
+      return apresConnexion(r.data.user);
+    }).catch(function(e){ui.err=messageAuth(e);render();});
   }else if(kind==='xequip'){
     var xid=f.getAttribute('data-e');
     addExEquip(xid,fd.get('item'));
@@ -868,8 +1008,11 @@ $app.addEventListener('submit',function(e){
     var xn=String(fd.get('name')||'').trim();
     if(!xn){ui.exErr='Donne un nom à l’exercice.';render();return;}
     ui.exCat=String(fd.get('cat'));
-    db.exercises.push({id:'e'+Date.now(),name:xn,cat:String(fd.get('cat')),unit:String(fd.get('unit'))==='sec'?'sec':'reps',tempo:4,equip:[],cue:String(fd.get('cue')||'').trim()});
-    ui.exErr='';save();render();toast('Exercice ajouté');
+    sbCreateExercise({name:xn,cat:String(fd.get('cat')),unit:String(fd.get('unit'))==='sec'?'sec':'reps',
+                      tempo:4,equip:[],cue:String(fd.get('cue')||'').trim()})
+      .then(function(ex){db.exercises.push(ex);ui.exErr='';render();toast('Exercice ajouté');})
+      .catch(function(e){console.error(e);ui.exErr='L’exercice n’a pas pu être ajouté.';render();});
+    ui.exErr='';render();
   }
 });
 
@@ -966,7 +1109,7 @@ function setDone(){
 }
 function finishRun(){
   R.finished=true;
-  db.done[R.sid+'|'+R.date]=true;save();
+  db.done[R.sid+'|'+R.date]=true;sbSetDone(R.sid,R.date);
   clearInterval(rt);endBeep();releaseWake();
   renderRunner();
 }
@@ -1181,7 +1324,17 @@ document.getElementById('bstop').addEventListener('click',closeBreath);
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&BS)closeBreath();});
 document.addEventListener('visibilitychange',function(){if(BS&&!BS.done&&document.visibilityState==='visible')requestWake();});
 
+/* Au chargement : si la personne était déjà connectée, on reprend sa
+   session ; sinon on affiche l'écran de connexion. */
 render();
+sb.auth.getSession().then(function(r){
+  var u = r.data && r.data.session && r.data.session.user;
+  if(u) return apresConnexion(u);
+}).catch(function(e){
+  console.error(e);
+  ui.err='Impossible de joindre le serveur. Vérifie ta connexion.';
+  render();
+});
 })();
 </script>
 
