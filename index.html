@@ -274,6 +274,28 @@ section { scroll-margin-top: 96px; }
 .contact dd a:hover { border-color: var(--gold); }
 @media (max-width: 760px) { .contact dl { grid-template-columns: minmax(0, 1fr); } }
 
+/* ---- Coaching sportif ---- */
+.coach-head { max-width: 62ch; margin-bottom: clamp(28px, 5vw, 44px); }
+.coach-head .lead { font-size: 1.2rem; font-weight: 300; line-height: 1.6; }
+.coach-head p + p { margin-top: 1em; }
+.coach-grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(32px, 6vw, 80px); align-items: start; }
+@media (max-width: 860px) { .coach-grid { grid-template-columns: minmax(0, 1fr); } }
+.coach-price { display: grid; gap: 6px; border-left: 2px solid var(--gold); padding-left: 22px; }
+.coach-price .num { font-family: var(--display); font-size: clamp(1.9rem, 4vw, 2.6rem);
+  font-weight: 400; line-height: 1.15; }
+.coach-price .unit { color: var(--muted); font-size: 1rem; line-height: 1.6; }
+/* Liste de ce qui est compris : une coche verte par ligne. */
+.incl { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.incl li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: start; }
+.incl .tick { width: 22px; height: 22px; margin-top: 3px; border-radius: 50%;
+  background: #1E8A5F; display: grid; place-items: center; }
+.incl .tick svg { width: 12px; height: 12px; display: block; }
+.incl b { font-weight: 500; }
+.incl span.d { display: block; color: var(--muted); font-size: .97rem; line-height: 1.6; }
+.extra { margin-top: clamp(28px, 4vw, 40px); border-top: 1px solid var(--line);
+  padding-top: 20px; color: var(--muted); max-width: 58ch; }
+
 footer { background: var(--ink); color: rgba(255,255,255,.7); padding-block: 32px; padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px)); font-size: .92rem; }
 footer .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 footer a { color: inherit; }
@@ -379,6 +401,7 @@ footer img { width: 34px; height: auto; }
     <a href="#presentation">Présentation</a>
     <a href="#prestations">Prestations</a>
     <a href="#videos">Vidéos</a>
+    <a href="#coaching">Coaching</a>
     <a href="#tarifs">Tarifs</a>
     <a href="#acces">Cabinets</a>
     <a href="#contact">Contact</a>
@@ -566,9 +589,62 @@ footer img { width: 34px; height: auto; }
     </section>
 
     <!-- ===================== TARIFS ===================== -->
+
+    <section class="band" id="coaching" aria-labelledby="t-coaching">
+      <div class="wrap">
+        <h2 id="t-coaching" style="margin-bottom:clamp(20px,3vw,28px)">Coaching sportif</h2>
+        <div class="coach-head">
+          <p class="lead">Une seule formule, et tout est dedans.</p>
+          <p>Pas de palier, pas d'option à cocher. Vous payez un tarif, et vous avez accès à l'ensemble de l'accompagnement. Le suivi se fait à distance, où que vous soyez.</p>
+        </div>
+
+        <div class="coach-grid">
+          <div class="coach-price">
+            <span class="num">70 CHF <span style="font-size:.5em">/ mois</span></span>
+            <span class="unit">Engagement minimum de trois mois, puis au mois.</span>
+          </div>
+
+          <ul class="incl">
+            <li>
+              <span class="tick" aria-hidden="true"><svg viewBox="0 0 12 12" fill="none"><path d="M1.5 6.2 4.4 9 10.5 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span><b>Un premier échange, par e-mail ou par téléphone</b>
+              <span class="d">On fait le point sur vos objectifs, votre historique et le temps dont vous disposez.</span></span>
+            </li>
+            <li>
+              <span class="tick" aria-hidden="true"><svg viewBox="0 0 12 12" fill="none"><path d="M1.5 6.2 4.4 9 10.5 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span><b>Des tests physiques</b>
+              <span class="d">Pour partir de ce que vous valez vraiment aujourd'hui, et mesurer les progrès ensuite.</span></span>
+            </li>
+            <li>
+              <span class="tick" aria-hidden="true"><svg viewBox="0 0 12 12" fill="none"><path d="M1.5 6.2 4.4 9 10.5 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span><b>Des séances mises à jour autant de fois qu'il le faut</b>
+              <span class="d">Une blessure, un imprévu, une semaine chargée : je réajuste le plan, sans supplément et sans limite.</span></span>
+            </li>
+            <li>
+              <span class="tick" aria-hidden="true"><svg viewBox="0 0 12 12" fill="none"><path d="M1.5 6.2 4.4 9 10.5 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span><b>Un contact quand vous en avez besoin</b>
+              <span class="d">Une question entre deux séances, un doute sur une sensation : écrivez-moi, je réponds.</span></span>
+            </li>
+            <li>
+              <span class="tick" aria-hidden="true"><svg viewBox="0 0 12 12" fill="none"><path d="M1.5 6.2 4.4 9 10.5 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span><b>Mes vidéos de renforcement musculaire</b>
+              <span class="d">Accessibles dans votre espace coaching, avec les exercices filmés par mes soins.</span></span>
+            </li>
+            <li>
+              <span class="tick" aria-hidden="true"><svg viewBox="0 0 12 12" fill="none"><path d="M1.5 6.2 4.4 9 10.5 3" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span><b>Le suivi trail, course à pied et vélo sur Nolio</b>
+              <span class="d">Votre plan d'entraînement et vos séances réalisées, au même endroit, que je consulte pour ajuster la suite.</span></span>
+            </li>
+          </ul>
+        </div>
+
+        <p class="extra">Des séances en présentiel, dans l'un des deux cabinets, restent possibles en supplément.</p>
+      </div>
+    </section>
+
     <section class="band" id="tarifs" aria-labelledby="t-tarifs">
       <div class="wrap">
-        <h2 id="t-tarifs" style="margin-bottom:clamp(28px,5vw,48px)">Tarifs et remboursement</h2>
+        <h2 id="t-tarifs" style="margin-bottom:clamp(28px,5vw,48px)">Physiothérapie : tarifs et remboursement</h2>
         <div class="rates">
           <div class="rate-figure">
             <span class="num">Tarifs réglementés</span>
