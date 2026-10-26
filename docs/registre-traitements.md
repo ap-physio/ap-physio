@@ -43,7 +43,20 @@ Dernière mise à jour : 26 octobre 2026
 | Transfert à l'étranger | Irlande (EEE) |
 | Mesures de sécurité | Dossier de stockage privé ; adresses signées valables deux heures |
 
-## Traitement 3 — Journaux techniques du site
+## Traitement 3 — Prise de rendez-vous
+
+| | |
+| --- | --- |
+| Finalité | Permettre la réservation d'une séance au cabinet |
+| Catégories de personnes | Personnes prenant rendez-vous |
+| Catégories de données | Nom, coordonnées, créneau choisi, motif éventuel |
+| Base | Démarche volontaire de la personne, en vue de la prestation |
+| Durée de conservation | Selon les réglages et les conditions d'ePhysio |
+| Destinataires | ePhysio, prestataire établi en Suisse |
+| Transfert à l'étranger | Aucun : hébergement en Suisse |
+| À préciser | Statut exact d'ePhysio selon le contrat — sous-traitant ou responsable distinct — et durée de conservation appliquée |
+
+## Traitement 4 — Journaux techniques du site
 
 | | |
 | --- | --- |
@@ -61,7 +74,7 @@ Dernière mise à jour : 26 octobre 2026
 - Confirmer la forme juridique exacte et ajouter le numéro IDE (CHE-…).
 - Ajouter les numéros d'autorisation de pratiquer des cantons de Vaud et du Valais, si souhaité.
 - Documenter la base du transfert vers les États-Unis pour Netlify (clauses contractuelles types ou cadre de protection des données Suisse–États-Unis).
-- Identifier le prestataire de réservation en ligne et vérifier s'il agit comme sous-traitant ou comme responsable distinct.
+- Vérifier dans le contrat ePhysio s'il agit comme sous-traitant ou comme responsable distinct, et conclure le cas échéant un contrat de sous-traitance.
 - Ajouter dans l'espace coaching une fonction de suppression de compte, aujourd'hui faite à la main en base.
 
 ## En cas de violation de données
