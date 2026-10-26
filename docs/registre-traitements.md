@@ -11,6 +11,8 @@ Dernière mise à jour : 26 octobre 2026
 | | |
 | --- | --- |
 | Raison sociale | Pouchelet Aurèle physiothérapie |
+| Forme juridique | Entreprise individuelle |
+| Numéro IDE | CHE-440.817.245 |
 | Responsable | Aurèle Pouchelet, physiothérapeute diplômé |
 | Adresses | Grand-Rue 10, 1896 Vouvry · Chemin de Plantaz 57, 1095 Lutry |
 | Contact | physiotherapiepouchelet@gmail.com · 076 458 28 36 |
@@ -71,7 +73,6 @@ Dernière mise à jour : 26 octobre 2026
 
 ## Points à revoir
 
-- Confirmer la forme juridique exacte et ajouter le numéro IDE (CHE-…).
 - Ajouter les numéros d'autorisation de pratiquer des cantons de Vaud et du Valais, si souhaité.
 - Documenter la base du transfert vers les États-Unis pour Netlify (clauses contractuelles types ou cadre de protection des données Suisse–États-Unis).
 - Vérifier dans le contrat ePhysio s'il agit comme sous-traitant ou comme responsable distinct, et conclure le cas échéant un contrat de sous-traitance.
