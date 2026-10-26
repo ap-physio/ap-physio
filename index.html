@@ -284,19 +284,13 @@ footer img { width: 34px; height: auto; }
 <style>
 /* ---- Ajouts : prestations, vidéos, tarifs, horaires, FAQ ---- */
 
-/* Emplacement à compléter */
-.todo {
-  border: 1px dashed var(--gold); border-radius: 3px;
-  padding: 16px 18px; display: grid; gap: 6px;
-  background: rgba(201,164,92,.07);
-}
-.todo b { color: var(--gold-text); font-weight: 500; font-size: .9rem; letter-spacing: .04em; }
-.todo span { color: var(--muted); font-size: .96rem; line-height: 1.55; }
-.booking .todo span, .dark-band .todo span { color: rgba(255,255,255,.72); }
-.booking .todo b, .dark-band .todo b { color: var(--gold); }
 
 /* Prestations */
-.services { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: clamp(24px, 4vw, 48px); }
+/* Quatre prestations : une colonne sur téléphone, deux puis quatre ensuite,
+   pour qu'aucune carte ne reste seule sur sa ligne. */
+.services { display: grid; grid-template-columns: 1fr; gap: clamp(24px, 4vw, 48px); }
+@media (min-width: 560px) { .services { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .services { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .service { display: grid; gap: 10px; align-content: start; border-top: 1px solid var(--line); padding-top: 20px; }
 .service h3 { font-size: 1.22rem; font-weight: 400; }
 .service p { color: var(--muted); font-size: .99rem; }
@@ -456,10 +450,6 @@ footer img { width: 34px; height: auto; }
           <p>Je vous reçois dans mes deux cabinets, à Vouvry et à Lutry.</p>
           <p>Je soigne les douleurs et les limitations de mouvement des articulations, des muscles et du dos : suites de traumatisme, raideurs, douleurs de l'épaule ou de la cheville, reprise d'une activité sportive.</p>
           <p>Mon travail associe la thérapie manuelle et des exercices que vous pouvez refaire seul entre deux séances. Je pratique moi-même le triathlon extrême, ce qui m'aide à comprendre les besoins des sportifs d'endurance.</p>
-          <div class="todo">
-            <b>À compléter — vos diplômes</b>
-            <span>École et année d'obtention, formations continues suivies (Maitland, Mulligan, dry needling, autres), années d'expérience, lieux où vous avez exercé avant de vous installer.</span>
-          </div>
         </div>
       </div>
     </section>
@@ -488,10 +478,6 @@ footer img { width: 34px; height: auto; }
             <h3>Sportifs</h3>
             <p>Préparation, reprise après blessure et suivi des coureurs, cyclistes et triathlètes.</p>
           </article>
-          <div class="todo">
-            <b>À compléter — autres prestations</b>
-            <span>Dry needling, drainage lymphatique, rééducation vestibulaire, thérapie respiratoire, bandage fonctionnel… Dites-moi ce que vous proposez, je l'ajoute ou je corrige ce qui est listé.</span>
-          </div>
         </div>
       </div>
     </section>
@@ -561,10 +547,6 @@ footer img { width: 34px; height: auto; }
           </article>
         </div>
 
-        <div class="todo" style="margin-top:clamp(32px,5vw,56px);max-width:74ch">
-          <b>À compléter — vos identifiants YouTube</b>
-          <span>Mettez vos vidéos en ligne sur YouTube, puis envoyez-moi les liens. Je les branche ici. Vous pouvez aussi le faire vous-même : dans index.html, chaque vidéo a un champ data-yt="" — il suffit d'y coller la suite de caractères qui se trouve après v= dans l'adresse YouTube. Les emplacements vides restent invisibles pour les visiteurs une fois le site en ligne.</span>
-        </div>
       </div>
     </section>
 
@@ -581,10 +563,6 @@ footer img { width: 34px; height: auto; }
             <p>J'applique les tarifs réglementés de l'assurance maladie et de l'assurance accident. Vous n'avez donc pas de surprise sur le montant : il est fixé, identique partout en Suisse.</p>
             <p>La physiothérapie est prise en charge sur prescription médicale. Votre médecin établit l'ordonnance, je facture directement l'assurance, et seules votre franchise et votre quote-part restent à votre charge. En cas d'accident, c'est l'assurance accident qui prend le relais.</p>
             <p>Sans ordonnance, les séances restent possibles, mais à vos frais ou selon votre assurance complémentaire.</p>
-            <div class="todo">
-              <b>À vérifier et compléter</b>
-              <span>Délai et conditions d'annulation, moyens de paiement acceptés.</span>
-            </div>
           </div>
         </div>
       </div>
@@ -646,7 +624,6 @@ footer img { width: 34px; height: auto; }
             <summary>Comment annuler un rendez-vous ?</summary>
             <div class="answer">
               Prévenez-moi par téléphone ou par e-mail dès que possible.
-              <div class="todo" style="margin-top:14px"><b>À compléter</b><span>Indiquez votre délai d'annulation et si une séance non décommandée est facturée.</span></div>
             </div>
           </details>
         </div>
