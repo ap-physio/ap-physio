@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>AP Physio — Aurèle Pouchelet, physiothérapeute à Vouvry et Lutry</title>
-<meta name="description" content="AP Physio — physiothérapie à Vouvry et à Lutry. Aurèle Pouchelet, thérapie manuelle Maitland et Mulligan. Réservation en ligne.">
+<title>AP Physio — Aurèle Pouchelet, physiothérapeute à Vouvry</title>
+<meta name="description" content="AP Physio — physiothérapie à Vouvry. Aurèle Pouchelet, thérapie manuelle Maitland et Mulligan. Réservation en ligne.">
 <meta name="theme-color" content="#1a1a1a">
 <link rel="canonical" href="https://ap-physio.ch/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="AP Physio — Aurèle Pouchelet, physiothérapeute">
-<meta property="og:description" content="Physiothérapie et thérapie manuelle à Vouvry et à Lutry. Réservation en ligne.">
+<meta property="og:description" content="Physiothérapie et thérapie manuelle à Vouvry. Réservation en ligne.">
 <meta property="og:url" content="https://ap-physio.ch/">
 <meta property="og:locale" content="fr_CH">
 <link rel="icon" type="image/png" href="/assets/favicon.png">
@@ -85,24 +85,18 @@ h1, h2, h3 { text-wrap: balance; font-weight: 300; line-height: 1.15; }
 .top nav .btn-small.coach:hover { background: #d8b873; border-color: #d8b873; }
 @media (max-width: 680px) { .top nav a:not(.btn-small), .top nav .btn-small.coach { display: none; } }
 
-/* ---------- Page d'accueil : diagonale Vouvry / Lutry ---------- */
+/* ---------- Page d'accueil : la photo de Vouvry en pleine page ---------- */
 .splash {
   position: relative; isolation: isolate; overflow: hidden;
   min-height: 100svh; background: var(--ink);
   display: grid;
 }
 .half { position: absolute; inset: 0; background-size: cover; background-repeat: no-repeat; }
-.half.left  { background-image: url("assets/vouvry.jpg"); background-position: 26% center;
-              clip-path: polygon(0 0, 56% 0, 44% 100%, 0 100%); }
-.half.right { background-image: url("assets/lutry.jpg");  background-position: 74% center;
-              clip-path: polygon(56% 0, 100% 0, 100% 100%, 44% 100%); }
+.half.left { background-image: url("assets/vouvry.jpg"); background-position: center center; }
 .half::after { content: ""; position: absolute; inset: 0; }
-.half.left::after  { background: linear-gradient(135deg, rgba(20,22,20,.42), rgba(20,22,20,.80)); }
-.half.right::after { background: linear-gradient(225deg, rgba(16,24,30,.42), rgba(16,24,30,.82)); }
+.half.left::after { background: linear-gradient(160deg, rgba(20,22,20,.46), rgba(20,22,20,.78)); }
 .vignette { position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(ellipse 46% 40% at 50% 50%, rgba(10,10,10,.62), rgba(10,10,10,0) 70%); }
-.seam { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-.seam .m { display: none; }
 
 .splash-grid {
   position: relative; z-index: 2; display: grid; width: 100%;
@@ -116,9 +110,7 @@ h1, h2, h3 { text-wrap: balance; font-weight: 300; line-height: 1.15; }
 }
 .s-title { grid-column: 2; grid-row: 1; }
 .s-logo  { grid-column: 3; grid-row: 1; justify-self: end; align-self: start; }
-.s-left  { grid-column: 1; grid-row: 2; }
-.s-mid   { grid-column: 2; grid-row: 2; }
-.s-right { grid-column: 3; grid-row: 2; }
+.s-mid   { grid-column: 1 / -1; grid-row: 2; }
 .s-photo { grid-column: 1; grid-row: 3; justify-self: start; align-self: end; }
 .s-name  { grid-column: 2; grid-row: 3; }
 
@@ -131,7 +123,7 @@ h1, h2, h3 { text-wrap: balance; font-weight: 300; line-height: 1.15; }
 .place .days { font-size: clamp(.9rem, 1.15vw, 1.02rem); font-weight: 300; color: rgba(255,255,255,.86); line-height: 1.55; }
 .place .rule { width: 46px; height: 1px; background: var(--gold); justify-self: center; opacity: .85; }
 
-.s-mid { display: grid; justify-items: center; gap: 16px; }
+.s-mid { display: grid; justify-items: center; gap: clamp(22px, 3.5vh, 40px); }
 .s-qr { display: grid; justify-items: center; gap: 14px; text-decoration: none; color: #fff; }
 .s-qr .card { background: #fff; padding: 14px; border-radius: 3px; width: clamp(132px, 15vw, 192px);
   outline: 1px solid var(--gold); outline-offset: 9px; transition: outline-offset .25s ease; }
@@ -164,11 +156,8 @@ h1, h2, h3 { text-wrap: balance; font-weight: 300; line-height: 1.15; }
 /* Téléphone et tablette : diagonale horizontale, tout empilé */
 @media (max-width: 860px) {
   .splash { min-height: 0; padding-block: 0; }
-  .half.left  { clip-path: polygon(0 0, 100% 0, 100% 46%, 0 62%); background-position: center 32%; }
-  .half.right { clip-path: polygon(0 62%, 100% 46%, 100% 100%, 0 100%); background-position: center 70%; }
-  .vignette { background: radial-gradient(ellipse 72% 32% at 50% 52%, rgba(10,10,10,.66), rgba(10,10,10,0) 72%); }
-  .seam .d { display: none; }
-  .seam .m { display: block; }
+  .half.left { background-position: center center; }
+  .vignette { background: radial-gradient(ellipse 96% 52% at 50% 46%, rgba(10,10,10,.58), rgba(10,10,10,0) 76%); }
   .splash-grid {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto auto auto auto;
@@ -177,9 +166,7 @@ h1, h2, h3 { text-wrap: balance; font-weight: 300; line-height: 1.15; }
   }
   .s-title { grid-column: 1; grid-row: 1; }
   .s-logo  { grid-column: 1; grid-row: 2; justify-self: center; }
-  .s-left  { grid-column: 1; grid-row: 3; }
-  .s-mid   { grid-column: 1; grid-row: 4; }
-  .s-right { grid-column: 1; grid-row: 5; }
+  .s-mid   { grid-column: 1; grid-row: 3; }
   .s-photo { grid-column: 1; grid-row: 6; justify-self: center; }
   .s-name  { grid-column: 1; grid-row: 7; }
   .place { max-width: 30ch; margin-inline: auto; }
@@ -361,7 +348,7 @@ footer img { width: 34px; height: auto; }
 @media (max-width: 820px) { .rates { grid-template-columns: minmax(0, 1fr); } }
 
 /* Horaires et accès */
-.practical { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: clamp(28px, 5vw, 64px); align-items: start; }
+.practical { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, max-content)); gap: clamp(28px, 5vw, 64px); align-items: start; }
 .practical h3 { font-size: 1.15rem; font-weight: 400; margin-bottom: 12px; color: var(--gold-text); }
 .cabinet { display: grid; gap: 14px; align-content: start; border-top: 2px solid var(--gold); padding-top: 22px; }
 .cabinet .town { font-family: var(--display); font-weight: 400; font-size: 1.9rem; line-height: 1; }
@@ -420,12 +407,7 @@ footer img { width: 34px; height: auto; }
 <div class="page" id="accueil">
   <section class="splash" aria-label="Accueil">
     <div class="half left" role="img" aria-label="Vue aérienne de Vouvry"></div>
-    <div class="half right" role="img" aria-label="Vue aérienne de Lutry"></div>
     <div class="vignette"></div>
-    <svg class="seam" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      <line class="d" x1="56" y1="0" x2="44" y2="100" stroke="#c9a45c" stroke-width=".22" opacity=".8" vector-effect="non-scaling-stroke" stroke-linecap="square"/>
-      <line class="m" x1="0" y1="62" x2="100" y2="46" stroke="#c9a45c" stroke-width=".22" opacity=".8" vector-effect="non-scaling-stroke" stroke-linecap="square"/>
-    </svg>
 
     <div class="splash-grid">
       <p class="s-title">Physiothérapie</p>
@@ -434,25 +416,18 @@ footer img { width: 34px; height: auto; }
         <img src="assets/logo-ap.png" alt="Logo AP Physio" width="104" height="119">
       </div>
 
-      <div class="s-left place">
-        <span class="name">Vouvry</span>
-        <span class="rule"></span>
-        <span class="days">Rendez-vous les mardi, jeudi et vendredi</span>
-      </div>
-
       <div class="s-mid">
+        <div class="place">
+          <span class="name">Vouvry</span>
+          <span class="rule"></span>
+          <span class="days">Rendez-vous du lundi au vendredi</span>
+        </div>
         <a class="s-qr" href="https://www.tbooking.ch/fr/aurele-pouchelet/5616-7161" target="_blank" rel="noopener">
           <span class="card">
             <img src="assets/qr-reservation.png" alt="QR code vers la page de réservation" width="192" height="192">
           </span>
           <span class="cta">Cliquez ici pour réserver</span>
         </a>
-      </div>
-
-      <div class="s-right place">
-        <span class="name">Lutry</span>
-        <span class="rule"></span>
-        <span class="days">Rendez-vous possible les lundi et mercredi</span>
       </div>
 
       <div class="s-photo">
@@ -483,7 +458,7 @@ footer img { width: 34px; height: auto; }
           </dl>
         </div>
         <div class="body">
-          <p>Je vous reçois dans mes deux cabinets, à Vouvry et à Lutry.</p>
+          <p>Je vous reçois dans mon cabinet de Vouvry, du lundi au vendredi.</p>
           <p>Je soigne les douleurs et les limitations de mouvement des articulations, des muscles et du dos : suites de traumatisme, raideurs, douleurs de l'épaule ou de la cheville, reprise d'une activité sportive.</p>
           <p>Mon travail associe la thérapie manuelle et des exercices que vous pouvez refaire seul entre deux séances.</p>
           <p>Avant la physiothérapie, j'ai joué au handball à haut niveau à Dijon, et j'ai été sapeur-pompier volontaire pendant sept ans. Deux milieux où le corps encaisse, et où l'on apprend à distinguer la douleur qui passe de celle qui doit faire arrêter le geste.</p>
@@ -638,7 +613,7 @@ footer img { width: 34px; height: auto; }
           </ul>
         </div>
 
-        <p class="extra">Des séances de coaching en présentiel sont possibles en supplément, à votre domicile ou à mon cabinet de Lutry. <a href="#contact">Contactez-moi</a> pour en convenir.</p>
+        <p class="extra">Des séances de coaching en présentiel sont possibles en supplément, à votre domicile ou à mon cabinet. <a href="#contact">Contactez-moi</a> pour en convenir.</p>
       </div>
     </section>
 
@@ -663,29 +638,19 @@ footer img { width: 34px; height: auto; }
     <!-- ===================== HORAIRES ET ACCÈS ===================== -->
     <section class="band training" id="acces" aria-labelledby="t-acces">
       <div class="wrap">
-        <h2 id="t-acces" style="margin-bottom:clamp(28px,5vw,48px)">Les deux cabinets</h2>
+        <h2 id="t-acces" style="margin-bottom:clamp(28px,5vw,48px)">Le cabinet</h2>
         <div class="practical">
 
           <article class="cabinet">
             <span class="town">Vouvry</span>
             <span class="addr"><span>Grand-Rue 10</span><span class="zip">1896 Vouvry</span></span>
             <div class="when">
-              <div><span class="day">Mardi et jeudi</span><span class="hrs">8h00 – 18h00</span></div>
-              <div><span class="day">Vendredi</span><span class="hrs">8h00 – 13h00</span></div>
+              <div><span class="day">Du lundi au vendredi</span><span class="hrs">sur rendez-vous</span></div>
             </div>
             <span class="access"><b>Stationnement</b>Parkings publics à proximité.</span>
             <a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=Grand-Rue%2010%2C%201896%20Vouvry" target="_blank" rel="noopener">Voir sur la carte</a>
           </article>
 
-          <article class="cabinet">
-            <span class="town">Lutry</span>
-            <span class="addr"><span>Chemin de Plantaz 57</span><span class="zip">1095 Lutry</span></span>
-            <div class="when">
-              <div><span class="day">Lundi et mercredi</span><span class="hrs">8h00 – 19h00</span></div>
-            </div>
-            <span class="access"><b>Stationnement</b>Places réservées au cabinet, sous couvert.</span>
-            <a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=Chemin%20de%20Plantaz%2057%2C%201095%20Lutry" target="_blank" rel="noopener">Voir sur la carte</a>
-          </article>
 
         </div>
       </div>
@@ -746,14 +711,14 @@ footer img { width: 34px; height: auto; }
         <dl>
           <div><dt>Téléphone</dt><dd><a href="tel:+41764582836">076 458 28 36</a></dd></div>
           <div><dt>E-mail</dt><dd><a href="mailto:physiotherapiepouchelet@gmail.com">physiotherapiepouchelet@gmail.com</a></dd></div>
-          <div><dt>Cabinets</dt><dd>Vouvry et Lutry</dd></div>
+          <div><dt>Cabinet</dt><dd>Vouvry</dd></div>
         </dl>
       </div>
     </section>
 
     <footer>
       <div class="wrap">
-        <div class="foot-brand"><img src="assets/logo-ap-mini.png" alt="" width="34" height="39"><span>AP Physio — Vouvry et Lutry</span></div>
+        <div class="foot-brand"><img src="assets/logo-ap-mini.png" alt="" width="34" height="39"><span>AP Physio — Vouvry</span></div>
         <span>© 2026 Aurèle Pouchelet · <a href="/mentions-legales/">Mentions légales</a> · <a href="/confidentialite/">Confidentialité</a></span>
       </div>
     </footer>
