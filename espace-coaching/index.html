@@ -203,6 +203,11 @@ button.cell{cursor:pointer}
 .bar h2{font:700 1.65rem var(--font-display)}
 .pcard,.panel,.excard{display:grid;gap:12px;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:3px;align-content:start}
 .p-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.subform{display:grid;gap:12px;margin-top:14px;padding-top:16px;border-top:1px solid var(--line)}
+.subform h4{margin:0;font:700 1.1rem var(--font-display)}
+.apercu{display:grid;gap:10px;justify-items:start;margin-bottom:16px;padding:12px 14px;
+  background:var(--soft);border:1px solid var(--accent);border-radius:3px;font-size:.92rem}
+.apercu p{margin:0}
 .plist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .prow{appearance:none;width:100%;display:grid;
   grid-template-columns:auto 1fr auto;align-items:center;
@@ -545,6 +550,16 @@ function sbSaveSession(s){
     });
   });
 }
+function sbUpdateExercise(ex){
+  return sb.from('exercices').update({
+    nom:ex.name, categorie:ex.cat, unite:ex.unit, consigne:ex.cue
+  }).eq('id', ex.id).then(function(r){ if(r.error) throw r.error; });
+}
+function sbDeleteExercise(id){
+  return sb.from('exercices').delete().eq('id', id).then(function(r){
+    if(r.error) throw r.error;
+  });
+}
 function sbCreateExercise(ex){
   return sb.from('exercices').insert({
     nom:ex.name, categorie:ex.cat, unite:ex.unit, tempo:ex.tempo,
@@ -574,7 +589,7 @@ function sbUploadVideo(exId, file){
     });
 }
 
-var ui={pview:'seances',pid:null,exCat:CATS[0],sel:todayIso,cal:firstOfMonth(new Date()),aview:'sessions',edit:null,cat:'Tous',newDate:todayIso,err:'',edErr:'',lf:{},confirmDel:null,loginTab:'in'};
+var ui={pview:'seances',pid:null,preview:null,edNew:false,edNewErr:'',exEdit:null,exDel:null,exCardErr:'',exCat:CATS[0],sel:todayIso,cal:firstOfMonth(new Date()),aview:'sessions',edit:null,cat:'Tous',newDate:todayIso,err:'',edErr:'',lf:{},confirmDel:null,loginTab:'in'};
 var $app=document.getElementById('app'),$run=document.getElementById('runner'),$toast=document.getElementById('toast');
 
 function EX(id){
@@ -591,7 +606,8 @@ function sessEquip(s){
 }
 function patient(){
   if(!db.auth)return null;
-  for(var i=0;i<db.patients.length;i++)if(db.patients[i].id===db.auth.patientId)return db.patients[i];
+  var id=ui.preview||db.auth.patientId;
+  for(var i=0;i<db.patients.length;i++)if(db.patients[i].id===id)return db.patients[i];
   return null;
 }
 function sessionsOn(pid,d){return db.sessions.filter(function(s){return s.patientId===pid&&s.dates.indexOf(d)>-1;});}
@@ -603,7 +619,11 @@ function toast(m){$toast.textContent=m;$toast.hidden=false;clearTimeout(tt);tt=s
 /* ---------- Vues ---------- */
 function render(){
   if(db.auth&&db.auth.role==='patient'&&!patient())db.auth=null;
-  $app.innerHTML=!db.auth?loginHtml():headerHtml()+(db.auth.role==='admin'?adminHtml():patientHtml());
+  var corps;
+  if(!db.auth)corps=loginHtml();
+  else if(db.auth.role==='admin')corps=headerHtml()+(ui.preview?previewHtml():adminHtml());
+  else corps=headerHtml()+patientHtml();
+  $app.innerHTML=corps;
 }
 function nav(){render();window.scrollTo(0,0);}
 
@@ -731,6 +751,34 @@ function prepHtml(s){
   if(!need.length)return '<p class="meta">Aucun matériel nécessaire.</p>';
   return '<div class="equip"><p class="eq-title">Matériel à préparer</p><div class="chips">'+need.map(function(x){return '<span class="chip tagchip">'+esc(x)+'</span>';}).join('')+'</div></div>';
 }
+function exCardHtml(ex){
+  var v=videos[ex.id];
+  if(ui.exEdit===ex.id)return exEditHtml(ex);
+  var sup=ui.exDel===ex.id;
+  return '<article class="excard"><div><h3>'+esc(ex.name)+'</h3><p class="meta">'+esc(ex.cat)+' · '+(ex.unit==='sec'?'en secondes':'en répétitions')+'</p></div>'+
+    (ex.cue?'<p class="exc-cue">'+esc(ex.cue)+'</p>':'')+
+    '<div class="exc-vid">'+(v?'<video src="'+v+'" muted loop playsinline controls></video>':'<p class="muted small">Pas encore de vidéo</p>')+'</div>'+
+    exEquipHtml(ex)+
+    '<div><input id="vf-'+ex.id+'" class="vfile" type="file" accept="video/*" data-e="'+ex.id+'"><label class="btn sec small" for="vf-'+ex.id+'">'+(v?'Remplacer la vidéo':'Ajouter une vidéo')+'</label></div>'+
+    (ui.exCardErr&&ui.exDel===ex.id?'<p class="err">'+esc(ui.exCardErr)+'</p>':'')+
+    '<div class="row"><button class="btn sec small" type="button" data-a="ex-edit" data-e="'+ex.id+'">Modifier</button>'+
+    '<button class="btn small danger'+(sup?' on':'')+'" type="button" data-a="ex-del" data-e="'+ex.id+'">'+(sup?'Confirmer':'Supprimer')+'</button></div>'+
+    '</article>';
+}
+function exEditHtml(ex){
+  return '<form class="excard" data-form="exedit" data-e="'+ex.id+'" novalidate>'+
+    '<h3>Modifier l’exercice</h3>'+
+    '<label class="field" for="xe-name-'+ex.id+'">Nom<input id="xe-name-'+ex.id+'" name="name" type="text" maxlength="60" value="'+esc(ex.name)+'"></label>'+
+    '<label class="field" for="xe-cat-'+ex.id+'">Catégorie<select id="xe-cat-'+ex.id+'" name="cat">'+
+      CATS.map(function(c){return '<option'+(c===ex.cat?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select></label>'+
+    '<label class="field" for="xe-unit-'+ex.id+'">Se mesure en<select id="xe-unit-'+ex.id+'" name="unit">'+
+      '<option value="reps"'+(ex.unit!=='sec'?' selected':'')+'>Répétitions</option>'+
+      '<option value="sec"'+(ex.unit==='sec'?' selected':'')+'>Secondes tenues</option></select></label>'+
+    '<label class="field" for="xe-cue-'+ex.id+'">Consigne affichée pendant l’exercice<textarea id="xe-cue-'+ex.id+'" name="cue" maxlength="300">'+esc(ex.cue||'')+'</textarea></label>'+
+    (ui.exCardErr?'<p class="err" role="alert">'+esc(ui.exCardErr)+'</p>':'')+
+    '<div class="row"><button class="btn small" type="submit">Enregistrer</button>'+
+    '<button class="btn sec small" type="button" data-a="ex-cancel">Annuler</button></div></form>';
+}
 function exEquipHtml(ex){
   var eq=ex.equip||[],all=EQUIP.slice();
   eq.forEach(function(x){if(all.map(function(y){return y.toLowerCase();}).indexOf(x.toLowerCase())<0)all.push(x);});
@@ -779,6 +827,16 @@ function sessionsHtml(){
   return h;
 }
 
+/* Aperçu : l'espace tel que le voit la personne, sans rien enregistrer. */
+function previewHtml(){
+  var p=getPatient(ui.preview);
+  if(!p){ui.preview=null;return adminHtml();}
+  return '<div class="apercu"><p>Aperçu de l’espace de <strong>'+esc(p.name)+'</strong>. '+
+    'Rien de ce que tu fais ici n’est enregistré.</p>'+
+    '<button class="btn sec small" type="button" data-a="preview-off">Quitter l’aperçu</button></div>'+
+    patientHtml();
+}
+
 /* Page d'un patient : son matériel et ses séances. */
 function patientPageHtml(){
   var p=getPatient(ui.pid);
@@ -787,6 +845,7 @@ function patientPageHtml(){
   return '<button class="back" type="button" data-a="tab-s">‹ Retour à la liste</button>'+
     '<div class="bar"><h2>'+esc(p.name)+'</h2>'+
     '<button class="btn small" type="button" data-a="new" data-p="'+p.id+'">Ajouter une séance</button></div>'+
+    '<div><button class="btn sec small" type="button" data-a="preview-on" data-p="'+p.id+'">Voir comme cette personne</button></div>'+
     (p.email?'<p class="meta">'+esc(p.email)+'</p>':'')+
     '<section class="pcard">'+equipHtml(p)+'</section>'+
     '<section class="pcard"><h3>Séances</h3>'+
@@ -804,13 +863,7 @@ function exercisesHtml(){
     '<label class="field" for="nx-cue">Consigne affichée pendant l’exercice<textarea id="nx-cue" name="cue" maxlength="300"></textarea></label>'+
     (ui.exErr?'<p class="err" role="alert">'+esc(ui.exErr)+'</p>':'')+
     '<div><button class="btn small" type="submit">Ajouter à la bibliothèque</button></div></form>';
-  h+=shown.length?'<div class="exgrid">'+shown.map(function(ex){
-    var v=videos[ex.id];
-    return '<article class="excard"><div><h3>'+esc(ex.name)+'</h3><p class="meta">'+esc(ex.cat)+' · '+(ex.unit==='sec'?'en secondes':'en répétitions')+'</p></div>'+
-      (ex.cue?'<p class="exc-cue">'+esc(ex.cue)+'</p>':'')+
-      '<div class="exc-vid">'+(v?'<video src="'+v+'" muted loop playsinline controls></video>':'<p class="muted small">Pas encore de vidéo</p>')+'</div>'+
-      exEquipHtml(ex)+'<div><input id="vf-'+ex.id+'" class="vfile" type="file" accept="video/*" data-e="'+ex.id+'"><label class="btn sec small" for="vf-'+ex.id+'">'+(v?'Remplacer la vidéo':'Ajouter une vidéo')+'</label></div></article>';
-  }).join('')+'</div>':'<p class="muted">Aucun exercice dans cet onglet. Ajoute-en un avec le formulaire ci-dessus.</p>';
+  h+=shown.length?'<div class="exgrid">'+shown.map(exCardHtml).join('')+'</div>':'<p class="muted">Aucun exercice dans cet onglet. Ajoute-en un avec le formulaire ci-dessus.</p>';
   h+='<p class="muted small">Les vidéos sont enregistrées sur le serveur et visibles dans les séances des personnes qui ont un compte.</p>';
   return h;
 }
@@ -853,7 +906,21 @@ function editorHtml(){
   }).join('');
   h+='<div class="split"><section class="panel"><h3>1 · Choisis les exercices</h3><div class="chips">'+
     cats.map(function(c){return '<button type="button" class="chip" data-a="ed-cat" data-c="'+c+'" aria-pressed="'+(ui.cat===c)+'">'+c+'</button>';}).join('')+
-    '</div><div class="picks">'+list+'</div></section>';
+    '</div><div class="picks">'+list+'</div>'+
+    (ui.edNew
+      ? '<form class="subform" data-form="ednew" novalidate><h4>Nouvel exercice</h4>'+
+        '<label class="field" for="en-name">Nom<input id="en-name" name="name" type="text" maxlength="60" autocomplete="off"></label>'+
+        '<div class="grid2">'+
+        '<label class="field" for="en-cat">Catégorie<select id="en-cat" name="cat">'+
+          CATS.map(function(c){return '<option'+(c===(ui.cat==='Tous'?CATS[0]:ui.cat)?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select></label>'+
+        '<label class="field" for="en-unit">Se mesure en<select id="en-unit" name="unit">'+
+          '<option value="reps">Répétitions</option><option value="sec">Secondes tenues</option></select></label></div>'+
+        '<label class="field" for="en-cue">Consigne (facultatif)<textarea id="en-cue" name="cue" maxlength="300"></textarea></label>'+
+        (ui.edNewErr?'<p class="err" role="alert">'+esc(ui.edNewErr)+'</p>':'')+
+        '<div class="row"><button class="btn small" type="submit">Créer et ajouter à la séance</button>'+
+        '<button class="btn sec small" type="button" data-a="ed-new-off">Annuler</button></div></form>'
+      : '<div><button class="btn sec small" type="button" data-a="ed-new-on">+ Nouvel exercice</button></div>')+
+    '</section>';
   h+='<section class="panel"><h3>2 · Règle la séance</h3>'+
     (s.items.length?s.items.map(function(it,i){return itemHtml(it,i,s.items.length);}).join('')+
       '<label class="field" for="ed-exrest">Repos entre exercices (secondes)<input id="ed-exrest" data-f="exRest" type="number" inputmode="numeric" min="0" max="600" value="'+s.exRest+'"></label>'
@@ -981,8 +1048,10 @@ $app.addEventListener('click',function(e){
     case 'cal-next':ui.cal=new Date(ui.cal.getFullYear(),ui.cal.getMonth()+1,1);render();break;
     case 'day':ui.sel=d.d;render();break;
     case 'start':startRun(d.s,ui.sel);break;
-    case 'tab-s':ui.aview='sessions';ui.pid=null;ui.confirmDel=null;nav();break;
+    case 'tab-s':ui.aview='sessions';ui.pid=null;ui.preview=null;ui.confirmDel=null;nav();break;
     case 'open-p':ui.pid=d.p;ui.aview='patient';ui.confirmDel=null;nav();break;
+    case 'preview-on':ui.preview=d.p;ui.pview='seances';ui.sel=todayIso;ui.cal=firstOfMonth(new Date());nav();break;
+    case 'preview-off':ui.preview=null;nav();break;
     case 'ptab-s':ui.pview='seances';render();break;
     case 'ptab-b':ui.pview='breath';render();break;
     case 'btog':bp[d.k]=!bp[d.k];bsave();render();if(d.k==='sound'&&bp.sound){ensureAudio();tone(523,.3,.1);}if(d.k==='vibe'&&bp.vibe)bbuzz(40);break;
@@ -990,9 +1059,24 @@ $app.addEventListener('click',function(e){
     case 'xe-toggle':toggleExEquip(d.e,d.v);break;
     case 'eq-add':addEquip(d.p,d.v);break;
     case 'eq-rm':removeEquip(d.p,+d.i);break;
-    case 'ex-cat':ui.exCat=d.c;render();break;
-    case 'tab-e':ui.aview='exercises';ui.pid=null;ui.exErr='';nav();break;
-    case 'tab-b':ui.aview='breath';ui.pid=null;nav();break;
+    case 'ex-cat':ui.exCat=d.c;ui.exEdit=null;ui.exDel=null;ui.exCardErr='';render();break;
+    case 'ex-edit':ui.exEdit=d.e;ui.exDel=null;ui.exCardErr='';render();break;
+    case 'ex-cancel':ui.exEdit=null;ui.exCardErr='';render();break;
+    case 'ex-del':
+      if(ui.exDel===d.e){
+        var xid=d.e;
+        sbDeleteExercise(xid).then(function(){
+          db.exercises=db.exercises.filter(function(x){return x.id!==xid;});
+          ui.exDel=null;ui.exCardErr='';render();toast('Exercice supprimé');
+        }).catch(function(e){
+          console.error(e);
+          ui.exCardErr='Impossible de supprimer : cet exercice est utilisé dans une séance. Retire-le d’abord des séances concernées.';
+          render();
+        });
+      }else{ui.exDel=d.e;ui.exCardErr='';render();}
+      break;
+    case 'tab-e':ui.aview='exercises';ui.pid=null;ui.preview=null;ui.exErr='';nav();break;
+    case 'tab-b':ui.aview='breath';ui.pid=null;ui.preview=null;nav();break;
     case 'new':openEditor(null,d.p);break;
     case 'edit':openEditor(d.s);break;
     case 'del':
@@ -1007,6 +1091,9 @@ $app.addEventListener('click',function(e){
       render();break;
     case 'ed-back':ui.aview=ui.pid?'patient':'sessions';ui.edit=null;nav();break;
     case 'ed-cat':ui.cat=d.c;render();break;
+    case 'ed-new-on':ui.edNew=true;ui.edNewErr='';render();
+      setTimeout(function(){var el=document.getElementById('en-name');if(el)el.focus();},0);break;
+    case 'ed-new-off':ui.edNew=false;ui.edNewErr='';render();break;
     case 'ed-toggle':toggleEx(d.e);ui.edErr='';render();break;
     case 'ed-up':move(+d.i,-1);render();break;
     case 'ed-down':move(+d.i,1);render();break;
@@ -1093,6 +1180,37 @@ $app.addEventListener('submit',function(e){
     addEquip(qp,fd.get('item'));
     var qi=$app.querySelector('form[data-p="'+qp+'"] input');
     if(qi)qi.focus();
+  }else if(kind==='ednew'){
+    var en=String(fd.get('name')||'').trim();
+    if(!en){ui.edNewErr='Donne un nom à l’exercice.';render();return;}
+    ui.edNewErr='Création…';render();
+    sbCreateExercise({name:en,cat:String(fd.get('cat')),
+                      unit:String(fd.get('unit'))==='sec'?'sec':'reps',
+                      tempo:4,equip:[],cue:String(fd.get('cue')||'').trim()})
+      .then(function(ex){
+        db.exercises.push(ex);
+        // On l'ajoute directement à la séance en cours de préparation.
+        if(ui.edit&&!ui.edit.items.some(function(it){return it.exId===ex.id;}))
+          ui.edit.items.push({exId:ex.id,sets:3,value:ex.unit==='sec'?30:12,rest:45,note:''});
+        ui.edNew=false;ui.edNewErr='';ui.cat=ex.cat;render();toast('Exercice créé et ajouté');
+      })
+      .catch(function(e){console.error(e);ui.edNewErr='L’exercice n’a pas pu être créé.';render();});
+  }else if(kind==='exedit'){
+    var xid2=f.getAttribute('data-e'),xe=findEx(xid2);
+    var xn2=String(fd.get('name')||'').trim();
+    if(!xe)return;
+    if(!xn2){ui.exCardErr='Donne un nom à l’exercice.';render();return;}
+    var avant={name:xe.name,cat:xe.cat,unit:xe.unit,cue:xe.cue};
+    xe.name=xn2;xe.cat=String(fd.get('cat'));
+    xe.unit=String(fd.get('unit'))==='sec'?'sec':'reps';
+    xe.cue=String(fd.get('cue')||'').trim();
+    ui.exEdit=null;ui.exCardErr='';ui.exCat=xe.cat;render();
+    sbUpdateExercise(xe).then(function(){toast('Exercice modifié');})
+      .catch(function(e){
+        console.error(e);
+        xe.name=avant.name;xe.cat=avant.cat;xe.unit=avant.unit;xe.cue=avant.cue;
+        render();toast('La modification n’a pas pu être enregistrée.');
+      });
   }else if(kind==='exform'){
     var xn=String(fd.get('name')||'').trim();
     if(!xn){ui.exErr='Donne un nom à l’exercice.';render();return;}
@@ -1263,7 +1381,7 @@ function startRun(sid,date){
 }
 function finishRun(){
   R.finished=true;
-  db.done[R.sid+'|'+R.date]=true;sbSetDone(R.sid,R.date);
+  if(!ui.preview){db.done[R.sid+'|'+R.date]=true;sbSetDone(R.sid,R.date);}
   clearInterval(rt);endBeep();buzz([200,80,200,80,320]);releaseWake();
   renderRunner();
 }
