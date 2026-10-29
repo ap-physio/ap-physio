@@ -774,6 +774,8 @@ function exEditHtml(ex){
     '<label class="field" for="xe-unit-'+ex.id+'">Se mesure en<select id="xe-unit-'+ex.id+'" name="unit">'+
       '<option value="reps"'+(ex.unit!=='sec'?' selected':'')+'>Répétitions</option>'+
       '<option value="sec"'+(ex.unit==='sec'?' selected':'')+'>Secondes tenues</option></select></label>'+
+    '<p class="muted small">Le nom et la consigne se mettent à jour dans toutes les séances déjà assignées. '+
+    'En revanche, changer l’unité change le sens des valeurs déjà réglées : un 12 passe de 12 répétitions à 12 secondes.</p>'+
     '<label class="field" for="xe-cue-'+ex.id+'">Consigne affichée pendant l’exercice<textarea id="xe-cue-'+ex.id+'" name="cue" maxlength="300">'+esc(ex.cue||'')+'</textarea></label>'+
     (ui.exCardErr?'<p class="err" role="alert">'+esc(ui.exCardErr)+'</p>':'')+
     '<div class="row"><button class="btn small" type="submit">Enregistrer</button>'+
