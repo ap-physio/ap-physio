@@ -14,7 +14,7 @@ Dernière mise à jour : 26 octobre 2026
 | Forme juridique | Entreprise individuelle |
 | Numéro IDE | CHE-440.817.245 |
 | Responsable | Aurèle Pouchelet, physiothérapeute diplômé |
-| Adresses | Grand-Rue 10, 1896 Vouvry · Chemin de Plantaz 57, 1095 Lutry |
+| Adresse | Grand-Rue 10, 1896 Vouvry |
 | Contact | physiotherapiepouchelet@gmail.com · 076 458 28 36 |
 | Conseiller à la protection des données | aucun (non obligatoire) |
 
