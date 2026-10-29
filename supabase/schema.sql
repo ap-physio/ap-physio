@@ -281,6 +281,42 @@ create policy "dates gerees par l admin" on public.seance_dates
   using (public.est_admin()) with check (public.est_admin());
 
 -- ---------------------------------------------------------------------
+--    Fin de séance
+--    Appelée par la personne quand elle termine sa séance. Elle coche la
+--    date et efface les consignes ponctuelles, qui n'ont plus lieu d'être.
+--    En security definer, parce qu'un patient n'a pas le droit d'écrire
+--    dans seance_exercices : la fonction vérifie elle-même que la séance
+--    lui appartient.
+-- ---------------------------------------------------------------------
+create or replace function public.terminer_seance(p_seance uuid, p_jour date)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not exists (
+    select 1 from public.seances s
+    where s.id = p_seance
+      and (s.patient_id = auth.uid() or public.est_admin())
+  ) then
+    raise exception 'Séance introuvable ou non autorisée';
+  end if;
+
+  update public.seance_dates
+     set faite = true
+   where seance_id = p_seance and jour = p_jour;
+
+  update public.seance_exercices
+     set note = ''
+   where seance_id = p_seance and note <> '';
+end;
+$$;
+
+revoke all on function public.terminer_seance(uuid, date) from public;
+grant execute on function public.terminer_seance(uuid, date) to authenticated;
+
+-- ---------------------------------------------------------------------
 -- 5. Stockage des vidéos d'exercices
 --    Dossier privé : les vidéos ne sont pas accessibles sans compte.
 -- ---------------------------------------------------------------------

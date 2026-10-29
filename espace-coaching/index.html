@@ -301,7 +301,10 @@ button.cell{cursor:pointer}
 .x-card{flex:none;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:3px}
 .x-card .lab{display:block;color:var(--muted);font:500 .72rem/1 var(--font-body);letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px}
 .x-cue p{margin:0}
-.x-cue p + p{margin-top:8px;color:var(--muted)}
+/* Consigne du jour : mise en avant, et effacée une fois la séance faite. */
+.x-note{border-color:var(--accent);background:var(--soft)}
+.x-note .lab{color:var(--accent-ink)}
+.x-note p{margin:0}
 .x-dose{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;text-align:center}
 .x-dose strong{display:block;font:700 1.3rem/1.1 var(--font-display);font-variant-numeric:tabular-nums}
 .x-dose .lab{margin-bottom:4px}
@@ -515,8 +518,13 @@ function sbExerciceEquip(ex){
     .then(function(r){ if(r.error) oops(r.error, 'Le matériel'); });
 }
 function sbSetDone(sid, jour){
-  sb.from('seance_dates').update({faite:true}).eq('seance_id', sid).eq('jour', jour)
-    .then(function(r){ if(r.error) oops(r.error, 'La séance faite'); });
+  return sb.rpc('terminer_seance', {p_seance:sid, p_jour:jour}).then(function(r){
+    if(r.error){oops(r.error, 'La séance faite');return;}
+    // Les consignes ponctuelles ont été effacées côté serveur.
+    db.sessions.forEach(function(x){
+      if(x.id===sid)x.items.forEach(function(it){it.note='';});
+    });
+  });
 }
 function sbDeleteSession(sid){
   return sb.from('seances').delete().eq('id', sid).then(function(r){
@@ -881,7 +889,7 @@ function itemHtml(it,i,n){
       '<label class="field" for="it-value-'+i+'">'+(ex.unit==='sec'?'Secondes':'Répétitions')+'<input id="it-value-'+i+'" data-f="value" data-i="'+i+'" type="number" inputmode="numeric" min="1" max="300" value="'+it.value+'"></label>'+
       '<label class="field" for="it-rest-'+i+'">Repos (s)<input id="it-rest-'+i+'" data-f="rest" data-i="'+i+'" type="number" inputmode="numeric" min="0" max="600" value="'+it.rest+'"></label>'+
     '</div>'+
-    '<label class="field" for="it-note-'+i+'">Consigne pour cette séance (facultatif)'+
+    '<label class="field" for="it-note-'+i+'">Consigne du jour, effacée une fois la séance faite (facultatif)'+
       '<input id="it-note-'+i+'" data-f="note" data-i="'+i+'" type="text" maxlength="200" value="'+esc(it.note||'')+'" placeholder="Ex. : va moins bas que la dernière fois"></label>'+
     '</div>';
 }
@@ -1343,18 +1351,15 @@ function runnerHtml(){
   var dose = ex.unit==='sec'
     ? '<div><span class="lab">Maintien</span><strong>'+it.value+' s</strong></div>'
     : '<div><span class="lab">Répétitions</span><strong>'+it.value+'</strong></div>';
-  var cue = (it.note||ex.cue)
-    ? '<section class="x-card x-cue"><span class="lab">Consigne</span>'+
-      (ex.cue?'<p>'+esc(ex.cue)+'</p>':'')+
-      (it.note?'<p>'+esc(it.note)+'</p>':'')+'</section>'
-    : '';
+  var cue = ex.cue ? '<section class="x-card x-cue"><span class="lab">Consigne</span><p>'+esc(ex.cue)+'</p></section>' : '';
+  var note = it.note ? '<section class="x-card x-note"><span class="lab">Pour cette séance</span><p>'+esc(it.note)+'</p></section>' : '';
   var last = R.i===n-1;
   return '<div class="r-inner">'+
     '<header class="x-head"><h2 class="x-name">'+esc(ex.name)+'</h2>'+
       '<p class="x-idx">Ex : '+(R.i+1)+'/'+n+'</p></header>'+
     '<div class="x-scroll">'+
       '<div class="x-video">'+videoHtml(ex)+'</div>'+
-      cue+
+      cue+note+
       '<section class="x-card x-dose">'+
         '<div><span class="lab">Séries</span><strong>'+(R.set+1)+' / '+it.sets+'</strong></div>'+
         dose+
