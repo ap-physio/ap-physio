@@ -158,11 +158,15 @@ create table if not exists public.seance_exercices (
   -- Nombre de répétitions, ou nombre de secondes selon l'unité de l'exercice.
   valeur         integer not null default 12 check (valeur between 1 and 300),
   -- Repos entre deux séries, en secondes.
-  repos          integer not null default 45 check (repos between 0 and 600)
+  repos          integer not null default 45 check (repos between 0 and 600),
+  -- Consigne propre à cet exercice dans cette séance, en plus de la
+  -- consigne générale de l'exercice.
+  note           text not null default ''
 );
 
 alter table public.seance_exercices add column if not exists valeur integer not null default 12;
 alter table public.seance_exercices add column if not exists repos  integer not null default 45;
+alter table public.seance_exercices add column if not exists note   text not null default '';
 alter table public.seance_exercices drop column if exists repetitions;
 alter table public.seance_exercices drop column if exists repos_series;
 alter table public.seance_exercices drop column if exists repos_exercice;
