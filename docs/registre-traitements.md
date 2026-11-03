@@ -76,10 +76,25 @@ visiteurs vers cet agenda.
 | Portée | Journaux techniques uniquement. Les données des comptes de l'espace coaching ne transitent pas par Netlify : le navigateur s'adresse directement à Supabase. |
 | Mesures de sécurité | HTTPS ; en-têtes de sécurité définis dans netlify.toml |
 
+## Traitement 5 — Mesure d'audience des pages publiques
+
+| | |
+| --- | --- |
+| Finalité | Savoir combien de personnes consultent le site et quelles pages sont lues |
+| Catégories de personnes | Visiteurs des pages publiques du site |
+| Catégories de données | Page consultée, site d'origine (référent), pays, type d'appareil et de navigateur, code de réponse. Aucun cookie, aucun identifiant déposé sur l'appareil, aucune empreinte de navigateur, aucun comptage de visiteurs uniques. |
+| Base | Intérêt légitime à connaître la fréquentation de son propre site, l'outil ne permettant pas d'identifier les personnes |
+| Durée de conservation | Agrégats conservés par Cloudflare selon ses propres durées ; aucune donnée individuelle conservée par moi |
+| Destinataires | Sous-traitant : Cloudflare, Inc. (Cloudflare Web Analytics) |
+| Transfert à l'étranger | États-Unis, couvert par les clauses contractuelles types du contrat de traitement des données de Cloudflare. |
+| Portée | **Pages publiques uniquement.** La balise n'est pas présente sur `/espace-coaching/`, où les informations relèvent du secret professionnel. |
+| Mesures de sécurité | Script chargé en `defer` depuis le domaine de l'éditeur ; aucune donnée de compte accessible depuis les pages concernées |
+
 ## Points à revoir
 
 - Télécharger le contrat de traitement des données de Netlify depuis le tableau de bord et en conserver une copie datée avec ce registre.
 - Vérifier sur dataprivacyframework.gov si Netlify figure parmi les entreprises certifiées au Swiss-U.S. Data Privacy Framework, et le noter ici le cas échéant.
+- Conserver une copie datée du contrat de traitement des données de Cloudflare, et vérifier si Cloudflare figure parmi les entreprises certifiées au Swiss-U.S. Data Privacy Framework.
 
 ## En cas de violation de données
 

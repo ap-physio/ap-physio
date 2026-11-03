@@ -32,7 +32,9 @@
 
   <h2>En visitant le site</h2>
   <p>La simple consultation des pages ne demande aucune inscription. Mon hébergeur enregistre, comme tout hébergeur, des informations techniques de connexion : adresse IP, date et heure, page demandée, type de navigateur. Elles servent à faire fonctionner le site et à le protéger contre les abus.</p>
-  <p>Je n'utilise aucun outil de mesure d'audience, aucun pixel publicitaire, aucun réseau social intégré. Aucun cookie de suivi n'est déposé, et vous n'avez donc pas de bandeau à accepter.</p>
+  <p>Pour savoir combien de personnes consultent le site et quelles pages les intéressent, j'utilise un compteur de visites, <strong>Cloudflare Web Analytics</strong>. Il ne dépose aucun cookie, n'enregistre rien dans votre navigateur, et ne cherche pas à vous reconnaître à partir de votre adresse IP ou de votre navigateur. Il compte des pages vues et des visites, pas des personnes : aucun profil individuel n'est constitué, et vous ne pouvez pas y être identifié. Vous n'avez donc pas de bandeau à accepter.</p>
+  <p>Ce compteur n'est présent que sur les pages publiques du site. <strong>Il n'est pas installé sur l'espace coaching</strong>, où les informations sont d'une autre nature.</p>
+  <p>Aucun pixel publicitaire et aucun réseau social intégré ne sont présents sur le site.</p>
 
   <h2>En créant un compte sur l'espace coaching</h2>
   <h3>Ce qui est enregistré</h3>
@@ -53,6 +55,7 @@
   <p>Personne, hors les prestataires techniques strictement nécessaires :</p>
   <ul>
     <li><strong>Supabase, Inc.</strong> héberge les comptes, les séances et les vidéos, sur une infrastructure située en Irlande, dans l'Espace économique européen, que la Suisse reconnaît comme offrant une protection adéquate.</li>
+    <li><strong>Cloudflare, Inc.</strong>, aux États-Unis, fournit le compteur de visites des pages publiques. Il reçoit l'adresse de la page consultée, le site d'où vous arrivez, votre pays et le type d'appareil, sans cookie ni identifiant permettant de vous reconnaître d'une visite à l'autre. Ce service ne reçoit rien depuis l'espace coaching. Ce transfert est encadré par les clauses contractuelles types prévues au contrat conclu avec ce prestataire.</li>
     <li><strong>Netlify, Inc.</strong>, aux États-Unis, sert les pages du site. Les données de votre compte ne transitent pas par ce service : elles vont directement de votre navigateur vers Supabase. Netlify voit en revanche les informations techniques de connexion mentionnées plus haut. Ce transfert est encadré par les clauses contractuelles types prévues au contrat conclu avec ce prestataire.</li>
   </ul>
   <p>Aucune donnée n'est vendue, louée, ni transmise à des fins publicitaires. Aucune donnée n'est communiquée à votre assurance, à votre employeur ou à un tiers, sauf obligation légale ou accord écrit de votre part.</p>
@@ -94,5 +97,7 @@
   </div>
 </footer>
 
+<!-- Mesure d'audience Cloudflare : sans cookie, sans identifiant. -->
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "75a1da9685ce4d23bb6e6b52f5671e19"}'></script>
 </body>
 </html>
