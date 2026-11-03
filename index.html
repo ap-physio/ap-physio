@@ -893,6 +893,101 @@ footer img { width: 34px; height: auto; }
 })();
 </script>
 
+<!-- Offre de saison : coaching ski. Fenêtre fermable, sans cookie ni traceur. -->
+<style>
+.ski-ov{position:fixed;inset:0;z-index:2000;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(20,22,20,.55);}
+.ski-ov.on{display:flex;animation:ski-fade .25s ease-out}
+.ski-box{position:relative;width:100%;max-width:460px;max-height:calc(100dvh - 32px);overflow:auto;background:#fff;color:var(--text,#222321);border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.35);font-family:var(--font,sans-serif);line-height:1.5;animation:ski-up .3s ease-out}
+.ski-top{background:linear-gradient(135deg,#1a1a1a 0%,#2c3a44 100%);color:#fff;padding:26px 26px 22px;border-radius:18px 18px 0 0}
+.ski-tag{display:inline-block;font-size:.8rem;letter-spacing:.04em;text-transform:uppercase;background:var(--gold,#c9a45c);color:#1a1a1a;font-weight:600;padding:4px 12px;border-radius:999px;margin-bottom:12px}
+.ski-top h2{font-family:var(--display,serif);font-weight:500;font-size:clamp(1.7rem,6vw,2.1rem);line-height:1.1;margin:0 0 8px;color:#fff}
+.ski-top p{margin:0;font-size:1rem;color:#e9ece8}
+.ski-body{padding:20px 26px 26px}
+.ski-list{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:12px}
+.ski-list li{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;font-size:.98rem}
+.ski-list .e{font-size:1.35rem;line-height:1.2}
+.ski-list b{font-weight:600}
+.ski-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;background:#f6f1e6;border:1px solid #e4d6b4;border-radius:12px;padding:12px 16px;margin-bottom:6px}
+.ski-price .n{font-family:var(--display,serif);font-size:2rem;font-weight:600;color:#1a1a1a;line-height:1}
+.ski-price .u{font-size:.95rem;color:#595c57}
+.ski-note{font-size:.88rem;color:#595c57;margin:0 0 18px}
+.ski-cta{display:flex;flex-wrap:wrap;gap:10px}
+.ski-cta a{flex:1 1 170px;text-align:center;text-decoration:none;font-weight:600;font-size:1rem;padding:13px 16px;border-radius:999px;min-height:48px;display:inline-flex;align-items:center;justify-content:center}
+.ski-cta .p{background:#1a1a1a;color:#fff}
+.ski-cta .s{background:#fff;color:#1a1a1a;border:1.5px solid #1a1a1a}
+.ski-x{position:absolute;top:10px;right:10px;width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:1.6rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.ski-x:hover{background:rgba(255,255,255,.3)}
+.ski-x:focus-visible,.ski-cta a:focus-visible{outline:2px solid var(--gold,#c9a45c);outline-offset:3px}
+.ski-later{display:block;margin:14px auto 0;background:none;border:0;color:#595c57;font:inherit;font-size:.9rem;text-decoration:underline;cursor:pointer;min-height:40px}
+@keyframes ski-fade{from{opacity:0}to{opacity:1}}
+@keyframes ski-up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (max-width:520px){.ski-ov{align-items:flex-end;padding:0}.ski-box{border-radius:18px 18px 0 0;max-height:92dvh}.ski-top{padding:24px 20px 18px}.ski-body{padding:16px 20px 22px}}
+@media (prefers-reduced-motion:reduce){.ski-ov.on,.ski-box{animation:none}}
+</style>
+<div class="ski-ov" id="ski-ov" role="dialog" aria-modal="true" aria-labelledby="ski-t" hidden>
+  <div class="ski-box">
+    <button class="ski-x" id="ski-x" type="button" aria-label="Fermer">&times;</button>
+    <div class="ski-top">
+      <span class="ski-tag">❄️ Offre de saison · 10 places</span>
+      <h2 id="ski-t">Préparez votre saison de ski ⛷️</h2>
+      <p>Du renforcement musculaire à distance, à la maison ou en salle de sport.</p>
+    </div>
+    <div class="ski-body">
+      <ul class="ski-list">
+        <li><span class="e" aria-hidden="true">🛡️</span><span><b>Moins de risque de blessure.</b> Des jambes, un tronc et des genoux bien préparés encaissent mieux la reprise des pistes.</span></li>
+        <li><span class="e" aria-hidden="true">😄</span><span><b>Plus de plaisir à skier.</b> Moins de fatigue en fin de journée, plus de confiance dans les virages.</span></li>
+        <li><span class="e" aria-hidden="true">📱</span><span><b>Un suivi simple.</b> Un appel téléphonique pour faire le bilan, puis on échange par WhatsApp.</span></li>
+      </ul>
+      <div class="ski-price"><span class="n">80 CHF</span><span class="u">pour 2 mois de coaching 💪</span></div>
+      <p class="ski-note">🎿 Tarif réservé aux 10 premiers inscrits. Ensuite, un tarif préférentiel est possible si vous souhaitez continuer.</p>
+      <div class="ski-cta">
+        <a class="p" href="mailto:physiotherapiepouchelet@gmail.com?subject=Coaching%20pr%C3%A9paration%20ski&amp;body=Bonjour%2C%0A%0AJe%20souhaite%20profiter%20de%20l%27offre%20coaching%20ski%20(80%20CHF%20pour%202%20mois).%0A%0AMon%20nom%20%3A%0AMon%20num%C3%A9ro%20pour%20le%20bilan%20t%C3%A9l%C3%A9phonique%20%3A%0AMes%20disponibilit%C3%A9s%20%3A%0A%0AMerci%20!">✉️ Je réserve ma place</a>
+        <a class="s" href="tel:+41764582836">📞 Appeler</a>
+      </div>
+      <button class="ski-later" id="ski-later" type="button">Non merci</button>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var ov = document.getElementById('ski-ov');
+  if (!ov) return;
+  var KEY = 'ski-offre-2026', DAYS = 7, last = null;
+  // Pas de fenêtre pour les visiteurs arrivés par une annonce Google (ils cherchent un physio).
+  if (/[?&](gclid|gbraid|wbraid)=/.test(location.search)) return;
+  try {
+    var t = parseInt(localStorage.getItem(KEY) || '0', 10);
+    if (t && Date.now() - t < DAYS * 864e5) return;
+  } catch (e) {}
+  function close() {
+    ov.classList.remove('on'); ov.hidden = true;
+    document.removeEventListener('keydown', onKey);
+    try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+    if (last && last.focus) last.focus();
+  }
+  function onKey(e) {
+    if (e.key === 'Escape') { close(); return; }
+    if (e.key !== 'Tab') return;
+    var f = ov.querySelectorAll('button, a[href]');
+    if (!f.length) return;
+    var a = f[0], z = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === a) { e.preventDefault(); z.focus(); }
+    else if (!e.shiftKey && document.activeElement === z) { e.preventDefault(); a.focus(); }
+  }
+  function open() {
+    last = document.activeElement;
+    ov.hidden = false; ov.classList.add('on');
+    document.addEventListener('keydown', onKey);
+    document.getElementById('ski-x').focus();
+  }
+  document.getElementById('ski-x').addEventListener('click', close);
+  document.getElementById('ski-later').addEventListener('click', close);
+  ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+  ov.querySelectorAll('.ski-cta a').forEach(function (a) { a.addEventListener('click', function () { try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {} }); });
+  setTimeout(open, 1500);
+})();
+</script>
+
 <!-- Mesure d'audience Cloudflare : sans cookie, sans identifiant. -->
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "75a1da9685ce4d23bb6e6b52f5671e19"}'></script>
 </body></html>
