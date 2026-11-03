@@ -139,7 +139,7 @@ h1, h2, h3 { text-wrap: balance; font-weight: 300; line-height: 1.15; }
 .s-photo .ph-img {
   width: clamp(104px, 11vw, 158px); aspect-ratio: 3 / 4; display: block;
   border: 1px solid rgba(201,164,92,.6); border-radius: 2px;
-  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgNDAwIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9InBnIiB4MT0iMCIgeTE9IjAiIHgyPSIuNSIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzMyMzMyZiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzFiMWMxZCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI3BnKSIvPjxnIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2M5YTQ1YyIgc3Ryb2tlLXdpZHRoPSIzIiBvcGFjaXR5PSIuNjUiPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjE1MCIgcj0iNTQiLz48cGF0aCBkPSJNNTQgMzMwYzAtNTMgNDMtOTYgOTYtOTZzOTYgNDMgOTYgOTYiLz48L2c+PHRleHQgeD0iMTUwIiB5PSIzNzgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNjOWE0NWMiIG9wYWNpdHk9Ii44NSIgZm9udC1mYW1pbHk9Ikpvc3QsIEZ1dHVyYSwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyMiIgbGV0dGVyLXNwYWNpbmc9IjEiPnZvdHJlIHBob3RvPC90ZXh0Pjwvc3ZnPg==");
+  background-image: url("assets/portrait.jpg");
   background-position: center; background-size: cover; background-repeat: no-repeat;
 }
 .s-name { display: grid; justify-items: center; gap: 14px; margin: 0; }
@@ -229,6 +229,20 @@ section { scroll-margin-top: 96px; }
 .intro .body { display: grid; gap: 1.25em; max-width: 60ch; }
 .intro .body p:first-child { font-size: 1.25rem; font-weight: 300; line-height: 1.6; }
 @media (max-width: 820px) { .intro { grid-template-columns: minmax(0, 1fr); } }
+.intro .who .portrait { margin: 10px 0 6px; max-width: 360px; }
+.portrait-img, .sp-img { display: block; width: 100%;
+  border: 1px solid rgba(201,164,92,.45); border-radius: 2px;
+  background-position: center; background-size: cover; background-repeat: no-repeat; }
+.portrait-img { aspect-ratio: 3 / 4; background-image: url("assets/portrait-cabinet.jpg"); }
+.sp-img { aspect-ratio: 1 / 1; background-image: url("assets/cabinet-bilan.jpg"); }
+.head-split { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: clamp(28px, 6vw, 72px); align-items: center; margin-bottom: clamp(36px, 6vw, 64px); }
+.head-split > header { margin-bottom: 0; }
+.side-photo { margin: 0; }
+@media (max-width: 820px) {
+  .head-split { grid-template-columns: minmax(0, 1fr); }
+  .side-photo { max-width: 360px; }
+}
 
 /* Formations */
 .training { }
@@ -448,6 +462,9 @@ footer img { width: 34px; height: auto; }
         <div class="who">
           <h2 id="t-presentation">Aurèle Pouchelet</h2>
           <p class="role">Physiothérapeute indépendant</p>
+          <figure class="portrait">
+            <span class="portrait-img" role="img" aria-label="Aurèle Pouchelet dans son cabinet de Vouvry, avec un modèle anatomique de colonne vertébrale"></span>
+          </figure>
           <dl class="parcours">
             <dt>Diplôme</dt>
             <dd>AP-HP, Assistance publique – Hôpitaux de Paris, 2019</dd>
@@ -470,10 +487,15 @@ footer img { width: 34px; height: auto; }
     <!-- ===================== PRESTATIONS ===================== -->
     <section class="band training" id="prestations" aria-labelledby="t-prestations">
       <div class="wrap">
-        <header>
-          <h2 id="t-prestations">Ce que je traite</h2>
-          <p>Chaque séance commence par un bilan : je cherche d'où vient la douleur avant de choisir le traitement.</p>
-        </header>
+        <div class="head-split">
+          <header>
+            <h2 id="t-prestations">Ce que je traite</h2>
+            <p>Chaque séance commence par un bilan : je cherche d'où vient la douleur avant de choisir le traitement.</p>
+          </header>
+          <figure class="side-photo">
+            <span class="sp-img" role="img" aria-label="Aurèle Pouchelet expliquant la colonne vertébrale sur un modèle anatomique"></span>
+          </figure>
+        </div>
         <div class="services">
           <article class="service">
             <h3>Dos et nuque</h3>
