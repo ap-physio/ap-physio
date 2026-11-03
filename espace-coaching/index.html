@@ -301,6 +301,12 @@ button.cell{cursor:pointer}
 .unicheck{display:flex;align-items:center;gap:10px;font:500 .95rem/1.3 var(--font-body);cursor:pointer}
 .unicheck input{width:20px;height:20px;flex:none;accent-color:var(--accent)}
 .x-dose .side{display:block;margin-top:3px;font-style:normal;color:var(--accent-ink);font-size:.72rem;letter-spacing:.03em}
+.field.ro{display:grid;gap:2px;align-content:start;padding:6px 0}
+.field.ro span{font:500 .82rem/1.2 var(--font-body);color:var(--muted)}
+.field.ro strong{font:600 1rem/1.2 var(--font-body);color:var(--accent-ink)}
+.field.ro small{font:400 .72rem/1.2 var(--font-body);color:var(--muted)}
+.chain-note{margin:0;padding:8px 10px;border-radius:3px;background:var(--soft);
+  font:500 .86rem/1.4 var(--font-body);color:var(--accent-ink)}
 .linkbtn.on{border-style:solid;border-color:var(--accent);background:var(--soft);color:var(--accent-ink)}
 .linkbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .stick{position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));background:var(--surface);border:1px solid var(--line);border-radius:3px}
@@ -445,8 +451,25 @@ button.cell{cursor:pointer}
 'use strict';
 
 //<logic>
-function exTime(ex,it){var w=ex.unit==='sec'?it.value:it.value*(ex.tempo||4);return it.sets*w+Math.max(0,it.sets-1)*it.rest;}
-function sessTimeWith(s,getEx){var t=0;s.items.forEach(function(it){t+=exTime(getEx(it.exId),it);});return t+Math.max(0,s.items.length-1)*s.exRest;}
+/* Temps de travail d'une série : les secondes tenues, ou les répétitions
+   multipliées par le tempo. Un exercice unilatéral compte les deux côtés. */
+function exTime(ex,it){
+  var w=ex.unit==='sec'?it.value:it.value*(ex.tempo||4);
+  return ex.uni?w*2:w;
+}
+/* Durée d'une séance. Les exercices enchaînés forment un bloc : on
+   additionne leur travail, et le repos ne compte qu'une fois par série. */
+function sessTimeWith(s,getEx){
+  var a=s.items,t=0,blocs=0,i=0,j,k,travail;
+  while(i<a.length){
+    j=i; while(j<a.length-1&&a[j].link) j++;
+    travail=0;
+    for(k=i;k<=j;k++) travail+=exTime(getEx(a[k].exId),a[k]);
+    t+=a[i].sets*travail+Math.max(0,a[i].sets-1)*a[j].rest;
+    blocs++; i=j+1;
+  }
+  return t+Math.max(0,blocs-1)*s.exRest;
+}
 function fmtDur(sec){if(sec<60)return sec+' s';return Math.round(sec/60)+' min';}
 //</logic>
 
@@ -1021,19 +1044,43 @@ function exercisesHtml(){
   return h;
 }
 
-function itemHtml(it,i,n,after){
-  var ex=EX(it.exId);
-  return '<div class="item'+(it.link&&i<n-1?' link-down':'')+(after?' link-up':'')+'"><div class="item-top"><span class="n">'+(i+1)+'</span><span class="nm">'+esc(ex.name)+'</span>'+
+function itemHtml(it,i,arr){
+  var n=arr.length, ex=EX(it.exId);
+  // Bornes de l'enchaînement auquel cet exercice appartient.
+  var prem=i, dern=i;
+  while(prem>0 && arr[prem-1].link) prem--;
+  while(dern<n-1 && arr[dern].link) dern++;
+  var chaine = dern>prem, apres = i>prem;
+  var refSets = arr[prem], refRest = arr[dern];
+
+  var cSets = (i===prem)
+    ? '<label class="field" for="it-sets-'+i+'">Séries'+(chaine?' de l\u2019enchaînement':'')+
+      '<input id="it-sets-'+i+'" data-f="sets" data-i="'+i+'" type="number" inputmode="numeric" min="1" max="10" value="'+it.sets+'"></label>'
+    : '<div class="field ro"><span>Séries</span><strong>'+refSets.sets+'</strong>'+
+      '<small>réglées sur '+esc(EX(refSets.exId).name)+'</small></div>';
+
+  var cRest = (i===dern)
+    ? '<label class="field" for="it-rest-'+i+'">Repos'+(chaine?' après l\u2019enchaînement':'')+' (s)'+
+      '<input id="it-rest-'+i+'" data-f="rest" data-i="'+i+'" type="number" inputmode="numeric" min="0" max="600" value="'+it.rest+'"></label>'
+    : '<div class="field ro"><span>Après</span><strong>enchaîner</strong>'+
+      '<small>repos après '+esc(EX(refRest.exId).name)+'</small></div>';
+
+  var ordre = (chaine && i===prem)
+    ? '<p class="chain-note">Une série = '+arr.slice(prem,dern+1).map(function(x){return esc(EX(x.exId).name);}).join(' \u2192 ')+
+      ', puis '+refRest.rest+' s de repos. '+
+      (refSets.sets>1?'Le tout '+refSets.sets+' fois.':'Une seule fois.')+'</p>'
+    : '';
+
+  return '<div class="item'+(it.link&&i<n-1?' link-down':'')+(apres?' link-up':'')+'"><div class="item-top"><span class="n">'+(i+1)+'</span><span class="nm">'+esc(ex.name)+'</span>'+
     '<button class="icon" type="button" data-a="ed-up" data-i="'+i+'" aria-label="Monter"'+(i===0?' disabled':'')+'>↑</button>'+
     '<button class="icon" type="button" data-a="ed-down" data-i="'+i+'" aria-label="Descendre"'+(i===n-1?' disabled':'')+'>↓</button>'+
     '<button class="icon" type="button" data-a="ed-rm" data-i="'+i+'" aria-label="Retirer l’exercice">✕</button></div>'+
-    '<div class="trio">'+
-      '<label class="field" for="it-sets-'+i+'">Séries<input id="it-sets-'+i+'" data-f="sets" data-i="'+i+'" type="number" inputmode="numeric" min="1" max="10" value="'+it.sets+'"></label>'+
+    '<div class="trio">'+cSets+
       '<label class="field" for="it-value-'+i+'">'+(ex.unit==='sec'?'Secondes':'Répétitions')+(ex.uni?' (chaque côté)':'')+'<input id="it-value-'+i+'" data-f="value" data-i="'+i+'" type="number" inputmode="numeric" min="1" max="300" value="'+it.value+'"></label>'+
-      '<label class="field" for="it-rest-'+i+'">Repos (s)<input id="it-rest-'+i+'" data-f="rest" data-i="'+i+'" type="number" inputmode="numeric" min="0" max="600" value="'+it.rest+'"></label>'+
-    '</div>'+
+      cRest+
+    '</div>'+ordre+
     (i<n-1?'<button class="linkbtn'+(it.link?' on':'')+'" type="button" data-a="ed-link" data-i="'+i+'" aria-pressed="'+(!!it.link)+'">'+
-      (it.link?'\u2713 Enchaîné avec l\u2019exercice suivant \u00b7 repos seulement après':'+ Enchaîner avec l\u2019exercice suivant')+'</button>':'')+
+      (it.link?'\u2713 Enchaîné avec '+esc(EX(arr[i+1].exId).name)+' \u00b7 pas de repos entre les deux':'+ Enchaîner avec l\u2019exercice suivant')+'</button>':'')+
     '<label class="field" for="it-note-'+i+'">Consigne du jour, effacée une fois la séance faite (facultatif)'+
       '<input id="it-note-'+i+'" data-f="note" data-i="'+i+'" type="text" maxlength="200" value="'+esc(it.note||'')+'" placeholder="Ex. : va moins bas que la dernière fois"></label>'+
     '</div>';
@@ -1078,7 +1125,7 @@ function editorHtml(){
       : '<div><button class="btn sec small" type="button" data-a="ed-new-on">+ Nouvel exercice</button></div>')+
     '</section>';
   h+='<section class="panel"><h3>2 · Règle la séance</h3>'+
-    (s.items.length?s.items.map(function(it,i){return itemHtml(it,i,s.items.length,i>0&&!!s.items[i-1].link);}).join('')+
+    (s.items.length?s.items.map(function(it,i){return itemHtml(it,i,s.items);}).join('')+
       '<label class="field" for="ed-exrest">Repos entre exercices (secondes)<input id="ed-exrest" data-f="exRest" type="number" inputmode="numeric" min="0" max="600" value="'+s.exRest+'"></label>'
       :'<p class="muted">Aucun exercice choisi. Touche un exercice dans la liste pour l’ajouter.</p>')+'</section></div>';
   h+=(ui.edErr?'<p class="err" role="alert">'+esc(ui.edErr)+'</p>':'');
@@ -1326,6 +1373,8 @@ function onField(el){
 $app.addEventListener('input',function(e){onField(e.target);});
 $app.addEventListener('change',function(e){
   var el=e.target;
+  var cf=el.getAttribute&&el.getAttribute('data-f');
+  if((cf==='sets'||cf==='rest')&&ui.edit&&ui.edit.items.some(function(x){return x.link;})){render();return;}
   if(el.type==='file'){
     var f=el.files&&el.files[0],id=el.getAttribute('data-e');
     if(f&&id){
@@ -1625,6 +1674,7 @@ function runnerHtml(){
   var lbl;
   if(R.mode!=='done'&&R.phase==='go')lbl='Série faite \u00b7 exercice suivant';
   else if(R.bi===R.blocks.length-1)lbl='Terminer la séance';
+  else if(R.mode==='done')lbl='Exercice suivant';
   else lbl=inChain()?'Passer l\u2019enchaînement':'Exercice suivant';
   return '<div class="r-inner">'+
     '<header class="x-head"><h2 class="x-name">'+esc(ex.name)+'</h2>'+
