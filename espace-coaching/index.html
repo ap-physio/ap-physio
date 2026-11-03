@@ -1679,7 +1679,7 @@ function runnerHtml(){
   return '<div class="r-inner">'+
     '<header class="x-head"><h2 class="x-name">'+esc(ex.name)+'</h2>'+
       '<p class="x-idx">Ex : '+(R.i+1)+'/'+n+
-        (inChain()?'<small>enchaînement '+(R.k+1)+'/'+R.blk.length+'</small>':'')+'</p></header>'+
+        (inChain()?'<small>série '+(R.set+1)+'/'+blkSets(s,R.blk)+' \u00b7 enchaînement '+(R.k+1)+'/'+R.blk.length+'</small>':'')+'</p></header>'+
     '<div class="x-scroll">'+
       '<div class="x-video">'+videoHtml(ex)+'</div>'+
       cue+note+
