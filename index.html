@@ -12,6 +12,71 @@
 <meta property="og:description" content="Physiothérapie et thérapie manuelle à Vouvry. Réservation en ligne.">
 <meta property="og:url" content="https://ap-physio.ch/">
 <meta property="og:locale" content="fr_CH">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Physiotherapy",
+  "@id": "https://ap-physio.ch/#cabinet",
+  "name": "AP Physio \u2014 Pouchelet Aurèle physiothérapie",
+  "alternateName": "AP Physio",
+  "description": "Cabinet de physiothérapie à Vouvry. Thérapie manuelle selon les concepts Maitland et Mulligan, rééducation après blessure ou opération, suivi des sportifs.",
+  "url": "https://ap-physio.ch/",
+  "telephone": "+41764582836",
+  "email": "physiotherapiepouchelet@gmail.com",
+  "image": "https://ap-physio.ch/assets/portrait-cabinet.jpg",
+  "logo": "https://ap-physio.ch/assets/logo-ap.png",
+  "priceRange": "$$",
+  "currenciesAccepted": "CHF",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Grand-Rue 10",
+    "postalCode": "1896",
+    "addressLocality": "Vouvry",
+    "addressRegion": "VS",
+    "addressCountry": "CH"
+  },
+  "hasMap": "https://www.google.com/maps/search/?api=1&query=Grand-Rue%2010%2C%201896%20Vouvry",
+  "areaServed": [
+    { "@type": "Place", "name": "Vouvry" },
+    { "@type": "Place", "name": "Les Évouettes" },
+    { "@type": "Place", "name": "Illarsaz" },
+    { "@type": "Place", "name": "Vionnaz" },
+    { "@type": "Place", "name": "Le Bouveret" },
+    { "@type": "Place", "name": "Saint-Gingolph" },
+    { "@type": "Place", "name": "Collombey-Muraz" },
+    { "@type": "Place", "name": "Monthey" },
+    { "@type": "Place", "name": "Noville" },
+    { "@type": "Place", "name": "Chessel" },
+    { "@type": "Place", "name": "Chablais" }
+  ],
+  "founder": {
+    "@type": "Person",
+    "name": "Aurèle Pouchelet",
+    "jobTitle": "Physiothérapeute indépendant",
+    "alumniOf": "Assistance publique \u2013 Hôpitaux de Paris"
+  },
+  "medicalSpecialty": "PhysicalTherapy",
+  "availableService": [
+    { "@type": "MedicalTherapy", "name": "Thérapie manuelle \u2014 concept Maitland" },
+    { "@type": "MedicalTherapy", "name": "Thérapie manuelle \u2014 concept Mulligan" },
+    { "@type": "MedicalTherapy", "name": "Rééducation après opération" },
+    { "@type": "MedicalTherapy", "name": "Suivi et reprise du sport après blessure" }
+  ],
+  "potentialAction": {
+    "@type": "ReserveAction",
+    "name": "Réserver une séance",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://www.tbooking.ch/fr/aurele-pouchelet/5616-7161",
+      "inLanguage": "fr-CH",
+      "actionPlatform": [
+        "https://schema.org/DesktopWebPlatform",
+        "https://schema.org/MobileWebPlatform"
+      ]
+    }
+  }
+}
+</script>
 <link rel="icon" type="image/png" href="/assets/favicon.png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -108,7 +173,9 @@ h1, h2, h3 { text-wrap: balance; font-weight: 300; line-height: 1.15; }
   padding-left: var(--gutter-l); padding-right: var(--gutter-r);
   color: #fff; text-align: center;
 }
-.s-title { grid-column: 2; grid-row: 1; }
+.s-title { grid-column: 2; grid-row: 1; margin: 0; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
 .s-logo  { grid-column: 3; grid-row: 1; justify-self: end; align-self: start; }
 .s-mid   { grid-column: 1 / -1; grid-row: 2; }
 .s-photo { grid-column: 1; grid-row: 3; justify-self: start; align-self: end; }
@@ -404,7 +471,7 @@ footer img { width: 34px; height: auto; }
     <a href="#videos">Vidéos</a>
     <a href="#coaching">Coaching</a>
     <a href="#tarifs">Tarifs</a>
-    <a href="#acces">Cabinets</a>
+    <a href="#acces">Cabinet</a>
     <a href="#contact">Contact</a>
     <a class="btn-small coach" href="/espace-coaching/">Mon espace coaching</a>
     <a class="btn-small" href="#reservation">Réserver</a>
@@ -424,7 +491,7 @@ footer img { width: 34px; height: auto; }
     <div class="vignette"></div>
 
     <div class="splash-grid">
-      <p class="s-title">Physiothérapie</p>
+      <h1 class="s-title">Physiothérapie<span class="sr-only"> à Vouvry — Aurèle Pouchelet, physiothérapeute indépendant, Chablais valaisan et vaudois</span></h1>
 
       <div class="s-logo">
         <img src="assets/logo-ap.png" alt="Logo AP Physio" width="104" height="119">
@@ -655,6 +722,9 @@ footer img { width: 34px; height: auto; }
               <div><span class="day">Du lundi au vendredi</span><span class="hrs">sur rendez-vous</span></div>
             </div>
             <span class="access"><b>Stationnement</b>Parkings publics à proximité.</span>
+            <span class="access"><b>D’où viennent mes patients</b>Vouvry, Les Évouettes, Illarsaz, Vionnaz,
+              Le Bouveret, Saint-Gingolph, Collombey-Muraz et Monthey côté valaisan ; Noville et Chessel
+              côté vaudois. Le cabinet est au centre du village, à quelques minutes de l’autoroute.</span>
             <a class="map" href="https://www.google.com/maps/search/?api=1&amp;query=Grand-Rue%2010%2C%201896%20Vouvry" target="_blank" rel="noopener">Voir sur la carte</a>
           </article>
 
