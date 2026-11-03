@@ -18,8 +18,14 @@ create table if not exists public.profils (
   email      text not null default '',
   role       text not null default 'patient' check (role in ('patient', 'admin')),
   materiel   text[] not null default '{}',
+  -- Précisions libres saisies par la personne, une par matériel coché :
+  -- {"Élastiques": "une rouge et une noire", "Haltères": "2 x 8 kg"}
+  materiel_details jsonb not null default '{}'::jsonb,
   cree_le    timestamptz not null default now()
 );
+
+alter table public.profils
+  add column if not exists materiel_details jsonb not null default '{}'::jsonb;
 
 -- Crée le profil automatiquement à l'inscription.
 create or replace function public.gerer_nouvel_utilisateur()
@@ -82,9 +88,11 @@ as $$
 begin
   -- auth.uid() est vide quand l'écriture vient du SQL Editor ou d'une clé de
   -- service : c'est déjà un accès de confiance, on ne bride rien.
+  -- La personne déclare elle-même son matériel et ses précisions :
+  -- materiel et materiel_details restent modifiables. Le rôle, l'adresse
+  -- e-mail et l'identifiant, eux, ne bougent pas.
   if auth.uid() is not null and not public.est_admin() then
     new.role := old.role;
-    new.materiel := old.materiel;
     new.email := old.email;
     new.id := old.id;
   end if;

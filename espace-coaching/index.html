@@ -235,6 +235,24 @@ button.cell{cursor:pointer}
 .tagchip{cursor:default;background:var(--soft);border-color:transparent}
 .warnline{color:var(--danger);font-size:.875rem;font-weight:500}
 .equip{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:3px;background:var(--bg)}
+.eq-det{margin:0;font:400 .9rem/1.4 var(--font-body);color:var(--muted)}
+.eq-det strong{color:var(--fg);font-weight:600}
+.pgrid{display:grid;gap:16px;align-items:start}
+.matos{background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:14px;display:grid;gap:10px;align-content:start}
+.matos h2{margin:0;font:600 1.05rem/1.2 var(--font-display)}
+.matos .small{margin:0}
+.mt-list{display:grid;gap:8px}
+.mt-row{display:grid;gap:6px;padding:8px 10px;border:1px solid transparent;border-radius:3px}
+.mt-row.on{border-color:var(--accent);background:var(--soft)}
+.mt-check{display:flex;align-items:center;gap:10px;font:500 .97rem/1.3 var(--font-body);cursor:pointer}
+.mt-check input{width:20px;height:20px;flex:none;accent-color:var(--accent);cursor:pointer}
+.mt-det{width:100%;min-height:40px;padding:8px 10px;border:1px solid var(--line);border-radius:3px;
+  background:var(--surface);color:var(--fg);font:400 .92rem var(--font-body)}
+.mt-det:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+@media (min-width:880px){
+  .app.narrow.two{max-width:920px}
+  .app.two .pgrid{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr)}
+}
 .eq-title{font:600 .78rem var(--font-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .cattabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 .cattab{appearance:none;display:grid;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:3px;background:var(--surface);color:var(--fg);font:600 1rem var(--font-body);text-align:left;cursor:pointer}
@@ -426,7 +444,9 @@ function fmtDur(sec){if(sec<60)return sec+' s';return Math.round(sec/60)+' min';
 
 var KEY='ap-seances-proto-v1';
 var CATS=['Membre supérieur','Membre inférieur','Mobilité / stretching','Tronc'];
-var EQUIP=['Élastiques','Haltères','Kettlebell','Tapis','Banc','Barre de traction','Swiss ball','Rouleau de massage'];
+var EQUIP=['Élastiques','Haltères','Tapis','Salle de musculation','Rouleau de massage','Kettlebell','Banc','Barre de traction','Swiss ball'];
+/* Ce qu'on suggère de préciser pour chaque matériel. */
+var EQHINT={'Élastiques':'couleurs ou résistances','Haltères':'les poids que tu as','Tapis':'épaisseur, taille','Salle de musculation':'laquelle, et les machines dont tu disposes','Rouleau de massage':'lisse ou à picots','Kettlebell':'les poids','Banc':'plat ou inclinable','Barre de traction':'fixe ou sur une porte','Swiss ball':'le diamètre'};
 function pad(n){return String(n).padStart(2,'0');}
 function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
 function parse(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
@@ -470,7 +490,8 @@ function oops(e, quoi){
 /* ---------- Lecture ---------- */
 function toPatient(r){
   var n = ((r.prenom||'') + ' ' + (r.nom||'')).trim();
-  return {id:r.id, name:n||'Sans nom', email:r.email||'', equipment:r.materiel||[], role:r.role};
+  return {id:r.id, name:n||'Sans nom', email:r.email||'', equipment:r.materiel||[],
+          details:r.materiel_details||{}, role:r.role};
 }
 function toExercise(r){
   return {id:r.id, name:r.nom, cat:r.categorie, unit:r.unite==='sec'?'sec':'reps',
@@ -531,8 +552,15 @@ function loadVideos(){
 
 /* ---------- Écriture ---------- */
 function sbPatientEquip(p){
-  sb.from('profils').update({materiel:p.equipment}).eq('id', p.id)
+  sb.from('profils').update({materiel:p.equipment, materiel_details:p.details||{}}).eq('id', p.id)
     .then(function(r){ if(r.error) oops(r.error, 'Le matériel'); });
+}
+/* Enregistrement différé pendant que la personne tape son détail. */
+var matosT=0;
+function matosSave(p){
+  if(ui.preview)return;
+  clearTimeout(matosT);
+  matosT=setTimeout(function(){sbPatientEquip(p);},700);
 }
 function sbExerciceEquip(ex){
   sb.from('exercices').update({materiel:ex.equip}).eq('id', ex.id)
@@ -710,7 +738,42 @@ function breathHtml(){
 }
 function patientHtml(){
   var p=patient();
-  return '<main class="app narrow"><h1 class="hello">Bonjour '+esc(p.name)+'</h1>'+patientTabs()+(ui.pview==='breath'?breathHtml():calendarHtml(p.id)+dayHtml(p.id))+'</main>';
+  if(ui.pview==='breath')
+    return '<main class="app narrow"><h1 class="hello">Bonjour '+esc(p.name)+'</h1>'+patientTabs()+breathHtml()+'</main>';
+  return '<main class="app narrow two"><h1 class="hello">Bonjour '+esc(p.name)+'</h1>'+patientTabs()+
+    '<div class="pgrid">'+calendarHtml(p.id)+matosHtml(p)+'</div>'+dayHtml(p.id)+'</main>';
+}
+/* La personne déclare elle-même ce dont elle dispose, et peut le préciser. */
+function matosHtml(p){
+  var eq=p.equipment||[],det=p.details||{},liste=EQUIP.slice();
+  eq.forEach(function(x){
+    if(liste.map(function(y){return y.toLowerCase();}).indexOf(x.toLowerCase())<0)liste.push(x);
+  });
+  var rows=liste.map(function(x,i){
+    var on=eq.some(function(y){return y.toLowerCase()===x.toLowerCase();});
+    var id='mt-'+i,hint=EQHINT[x]||'précise si besoin';
+    return '<div class="mt-row'+(on?' on':'')+'">'+
+      '<label class="mt-check" for="'+id+'"><input id="'+id+'" type="checkbox" data-a="mt-tog" data-v="'+esc(x)+'"'+
+        (on?' checked':'')+'><span>'+esc(x)+'</span></label>'+
+      (on?'<input class="mt-det" type="text" maxlength="140" data-f="mtdet" data-v="'+esc(x)+'" value="'+esc(det[x]||'')+
+          '" placeholder="Détail : '+esc(hint)+'" aria-label="Détail pour '+esc(x)+'">':'')+
+      '</div>';
+  }).join('');
+  return '<section class="matos" aria-labelledby="t-matos">'+
+    '<h2 id="t-matos">Matériel dont je dispose</h2>'+
+    '<p class="muted small">Coche ce que tu as. Aurèle s\u2019en sert pour choisir tes exercices.</p>'+
+    '<div class="mt-list">'+rows+'</div></section>';
+}
+function matosToggle(v){
+  var p=patient();
+  if(!p)return;
+  p.equipment=p.equipment||[];p.details=p.details||{};
+  var i=-1,k;
+  for(k=0;k<p.equipment.length;k++)if(p.equipment[k].toLowerCase()===v.toLowerCase())i=k;
+  if(i>-1){p.equipment.splice(i,1);delete p.details[v];}
+  else p.equipment.push(v);
+  if(!ui.preview)sbPatientEquip(p);
+  render();
 }
 function calendarHtml(pid){
   var m=ui.cal,y=m.getFullYear(),mo=m.getMonth();
@@ -829,15 +892,19 @@ function exEquipHtml(ex){
 }
 function equipHtml(p){
   var eq=p.equipment||[];
+  var det=p.details||{};
   var chips=eq.map(function(x,i){
     return '<span class="chip dchip">'+esc(x)+'<button type="button" data-a="eq-rm" data-p="'+p.id+'" data-i="'+i+'" aria-label="Retirer '+esc(x)+'">✕</button></span>';
+  }).join('');
+  var notes=eq.filter(function(x){return det[x];}).map(function(x){
+    return '<p class="eq-det"><strong>'+esc(x)+'</strong> '+esc(det[x])+'</p>';
   }).join('');
   var low=eq.map(function(x){return x.toLowerCase();});
   var sugg=EQUIP.filter(function(x){return low.indexOf(x.toLowerCase())<0;}).map(function(x){
     return '<button type="button" class="chip" data-a="eq-add" data-p="'+p.id+'" data-v="'+esc(x)+'">+ '+esc(x)+'</button>';
   }).join('');
-  return '<div class="equip"><p class="eq-title">Matériel à la maison</p>'+
-    (chips?'<div class="chips">'+chips+'</div>':'<p class="muted small">Aucun matériel renseigné.</p>')+
+  return '<div class="equip"><p class="eq-title">Matériel à la maison, déclaré par la personne</p>'+
+    (chips?'<div class="chips">'+chips+'</div>':'<p class="muted small">Aucun matériel renseigné.</p>')+notes+
     '<form class="row" data-form="equip" data-p="'+p.id+'" novalidate><input type="text" name="item" maxlength="40" placeholder="Ajouter un matériel" aria-label="Ajouter un matériel pour '+esc(p.name)+'"><button class="btn sec small" type="submit">Ajouter</button></form>'+
     (sugg?'<div class="chips">'+sugg+'</div>':'')+'</div>';
 }
@@ -1093,6 +1160,7 @@ $app.addEventListener('click',function(e){
     case 'open-p':ui.pid=d.p;ui.aview='patient';ui.confirmDel=null;nav();break;
     case 'preview-on':ui.preview=d.p;ui.pview='seances';ui.sel=todayIso;ui.cal=firstOfMonth(new Date());nav();break;
     case 'preview-off':ui.preview=null;nav();break;
+    case 'mt-tog':matosToggle(d.v);break;
     case 'ptab-s':ui.pview='seances';render();break;
     case 'ptab-b':ui.pview='breath';render();break;
     case 'btog':bp[d.k]=!bp[d.k];bsave();render();if(d.k==='sound'&&bp.sound){ensureAudio();tone(523,.3,.1);}if(d.k==='vibe'&&bp.vibe)bbuzz(40);break;
@@ -1148,6 +1216,11 @@ $app.addEventListener('click',function(e){
 
 function onField(el){
   var f=el.getAttribute&&el.getAttribute('data-f');
+  if(f==='mtdet'){
+    var mp=patient();
+    if(mp){mp.details=mp.details||{};mp.details[el.getAttribute('data-v')]=el.value;matosSave(mp);}
+    return;
+  }
   if(el.form&&el.name&&el.name!=='password'){
     var fk=el.form.getAttribute('data-form');
     if(fk==='login'||fk==='signup')ui.lf[el.name]=el.value;

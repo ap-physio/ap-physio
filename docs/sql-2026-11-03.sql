@@ -27,7 +27,29 @@ begin
 end
 $sd$;
 
--- 4. La fonction qui clôt une séance enregistre maintenant le ressenti.
+-- 4. Matériel déclaré par la personne, avec un détail libre par matériel.
+alter table public.profils
+  add column if not exists materiel_details jsonb not null default '{}'::jsonb;
+
+-- La personne peut désormais modifier son propre matériel et ses précisions.
+-- Le rôle, l'adresse e-mail et l'identifiant restent verrouillés.
+create or replace function public.proteger_profil()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if auth.uid() is not null and not public.est_admin() then
+    new.role := old.role;
+    new.email := old.email;
+    new.id := old.id;
+  end if;
+  return new;
+end;
+$$;
+
+-- 5. La fonction qui clôt une séance enregistre maintenant le ressenti.
 drop function if exists public.terminer_seance(uuid, date);
 
 create or replace function public.terminer_seance(p_seance uuid, p_jour date,
