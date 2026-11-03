@@ -263,6 +263,20 @@ button.cell{cursor:pointer}
 .item-top{display:flex;align-items:center;gap:8px}
 .item-top .n{min-width:1.4ch;font:700 1.3rem var(--font-display);color:var(--accent-ink)}
 .item-top .nm{flex:1;min-width:0;font-weight:600}
+.item.link-down{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.item.link-up{border-top-left-radius:0;border-top-right-radius:0;border-top-style:dashed}
+.item.link-down,.item.link-up{border-left:3px solid var(--accent)}
+.linkbtn{appearance:none;justify-self:start;padding:6px 11px;border:1px dashed var(--line);border-radius:999px;
+  background:transparent;color:var(--muted);font:500 .82rem/1.2 var(--font-body);cursor:pointer;text-align:left}
+.rategrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;width:100%;max-width:420px;margin-inline:auto}
+.rate{appearance:none;aspect-ratio:1;border:1px solid var(--line);border-radius:3px;background:var(--surface);
+  color:var(--ink);font:700 1.25rem var(--font-display);cursor:pointer;transition:background .12s,border-color .12s}
+.rate:hover,.rate:focus-visible{border-color:var(--accent);background:var(--soft);color:var(--accent-ink);outline:none}
+.unicheck{display:flex;align-items:center;gap:10px;font:500 .95rem/1.3 var(--font-body);cursor:pointer}
+.unicheck input{width:20px;height:20px;flex:none;accent-color:var(--accent)}
+.x-dose .side{display:block;margin-top:3px;font-style:normal;color:var(--accent-ink);font-size:.72rem;letter-spacing:.03em}
+.linkbtn.on{border-style:solid;border-color:var(--accent);background:var(--soft);color:var(--accent-ink)}
+.linkbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .stick{position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));background:var(--surface);border:1px solid var(--line);border-radius:3px}
 .stick .lab{display:block;color:var(--muted);font-size:.8rem}
 .stick strong{font:700 1.45rem var(--font-display)}
@@ -285,7 +299,11 @@ button.cell{cursor:pointer}
    minuteur posé en bas, toujours à portée de pouce. */
 .x-head{flex:none;display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-top:4px}
 .x-name{margin:0;font:700 clamp(1.25rem,5.2vw,1.7rem)/1.15 var(--font-display);text-wrap:balance}
-.x-idx{margin:0;flex:none;color:var(--muted);font-size:.92rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.x-idx{margin:0;flex:none;color:var(--muted);font-size:.92rem;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.x-idx small{display:block;margin-top:2px;color:var(--accent-ink);font-size:.74rem;letter-spacing:.06em}
+.x-next{margin:0;text-align:center;line-height:1.3}
+.x-next .lab{display:block;color:var(--muted);font:500 .68rem/1 var(--font-body);letter-spacing:.14em;text-transform:uppercase;margin-bottom:3px}
+.x-next b{font:600 1.02rem/1.25 var(--font-body);color:var(--accent-ink)}
 .x-scroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
 .x-video{flex:none;position:relative;width:100%;aspect-ratio:16/9;max-width:100%;
   overflow:hidden;border-radius:4px;background:var(--video-bg)}
@@ -456,6 +474,7 @@ function toPatient(r){
 }
 function toExercise(r){
   return {id:r.id, name:r.nom, cat:r.categorie, unit:r.unite==='sec'?'sec':'reps',
+          uni:!!r.unilateral,
           tempo:r.tempo||4, cue:r.consigne||'', equip:r.materiel||[], video:r.video||null};
 }
 
@@ -480,14 +499,16 @@ function loadAll(){
     });
     r[3].data.forEach(function(it){
       var o = byId[it.seance_id];
-      if(o) o.items.push({exId:it.exercice_id, sets:it.series, value:it.valeur, rest:it.repos, note:it.note||''});
+      if(o) o.items.push({exId:it.exercice_id, sets:it.series, value:it.valeur, rest:it.repos, note:it.note||'', link:!!it.enchaine});
     });
     db.done = {};
+    db.felt = {};
     r[4].data.forEach(function(d){
       var o = byId[d.seance_id];
       if(!o) return;
       if(o.dates.indexOf(d.jour) < 0) o.dates.push(d.jour);
       if(d.faite) db.done[d.seance_id + '|' + d.jour] = true;
+      if(d.ressenti != null) db.felt[d.seance_id + '|' + d.jour] = d.ressenti;
     });
     db.sessions.forEach(function(o){ o.dates.sort(); });
     return loadVideos();
@@ -517,8 +538,9 @@ function sbExerciceEquip(ex){
   sb.from('exercices').update({materiel:ex.equip}).eq('id', ex.id)
     .then(function(r){ if(r.error) oops(r.error, 'Le matériel'); });
 }
-function sbSetDone(sid, jour){
-  return sb.rpc('terminer_seance', {p_seance:sid, p_jour:jour}).then(function(r){
+function sbSetDone(sid, jour, ressenti){
+  return sb.rpc('terminer_seance', {p_seance:sid, p_jour:jour,
+                                    p_ressenti:(ressenti==null?null:ressenti)}).then(function(r){
     if(r.error){oops(r.error, 'La séance faite');return;}
     // Les consignes ponctuelles ont été effacées côté serveur.
     db.sessions.forEach(function(x){
@@ -543,7 +565,8 @@ function sbSaveSession(s){
     return sb.from('seance_exercices').delete().eq('seance_id', id).then(function(){
       return sb.from('seance_exercices').insert(s.items.map(function(it, i){
         return {seance_id:id, exercice_id:it.exId, position:i,
-                series:it.sets, valeur:it.value, repos:it.rest, note:it.note||''};
+                series:it.sets, valeur:it.value, repos:it.rest, note:it.note||'',
+                enchaine: !!(it.link && i < s.items.length - 1)};
       }));
     }).then(function(){
       return sb.from('seance_dates').delete().eq('seance_id', id).eq('faite', false);
@@ -560,7 +583,7 @@ function sbSaveSession(s){
 }
 function sbUpdateExercise(ex){
   return sb.from('exercices').update({
-    nom:ex.name, categorie:ex.cat, unite:ex.unit, consigne:ex.cue
+    nom:ex.name, categorie:ex.cat, unite:ex.unit, consigne:ex.cue, unilateral:!!ex.uni
   }).eq('id', ex.id).then(function(r){ if(r.error) throw r.error; });
 }
 function sbDeleteExercise(id){
@@ -571,7 +594,7 @@ function sbDeleteExercise(id){
 function sbCreateExercise(ex){
   return sb.from('exercices').insert({
     nom:ex.name, categorie:ex.cat, unite:ex.unit, tempo:ex.tempo,
-    consigne:ex.cue, materiel:ex.equip
+    consigne:ex.cue, materiel:ex.equip, unilateral:!!ex.uni
   }).select('*').single().then(function(r){
     if(r.error) throw r.error;
     return toExercise(r.data);
@@ -602,7 +625,7 @@ var $app=document.getElementById('app'),$run=document.getElementById('runner'),$
 
 function EX(id){
   for(var i=0;i<db.exercises.length;i++)if(db.exercises[i].id===id)return db.exercises[i];
-  return {id:id,name:'Exercice supprimé',cat:'',unit:'reps',tempo:4,cue:''};
+  return {id:id,name:'Exercice supprimé',cat:'',unit:'reps',uni:false,tempo:4,cue:''};
 }
 function sessTime(s){return sessTimeWith(s,EX);}
 function sessEquip(s){
@@ -746,7 +769,10 @@ function adminHtml(){
   return '<main class="app wide">'+tabs+corps+'</main>';
 }
 function sessRow(s){
-  var ds=s.dates.slice(0,4).map(function(d){return fmtShort.format(parse(d));}).join(' · ')+(s.dates.length>4?' +'+(s.dates.length-4):'');
+  var ds=s.dates.slice(0,4).map(function(d){
+    var f=db.felt[s.id+'|'+d];
+    return fmtShort.format(parse(d))+(f?' ('+f+'/10)':'');
+  }).join(' · ')+(s.dates.length>4?' +'+(s.dates.length-4):'');
   var c=ui.confirmDel===s.id;
   return '<div class="srow"><div class="s-main"><p class="s-title">'+esc(s.title)+'</p>'+
     '<p class="meta">≈ '+fmtDur(sessTime(s))+' · '+plural(s.items.length,'exercice')+'</p>'+
@@ -763,7 +789,7 @@ function exCardHtml(ex){
   var v=videos[ex.id];
   if(ui.exEdit===ex.id)return exEditHtml(ex);
   var sup=ui.exDel===ex.id;
-  return '<article class="excard"><div><h3>'+esc(ex.name)+'</h3><p class="meta">'+esc(ex.cat)+' · '+(ex.unit==='sec'?'en secondes':'en répétitions')+'</p></div>'+
+  return '<article class="excard"><div><h3>'+esc(ex.name)+'</h3><p class="meta">'+esc(ex.cat)+' · '+(ex.unit==='sec'?'en secondes':'en répétitions')+(ex.uni?' · unilatéral':'')+'</p></div>'+
     (ex.cue?'<p class="exc-cue">'+esc(ex.cue)+'</p>':'')+
     '<div class="exc-vid">'+(v?'<video src="'+v+'" muted loop playsinline controls></video>':'<p class="muted small">Pas encore de vidéo</p>')+'</div>'+
     exEquipHtml(ex)+
@@ -784,6 +810,7 @@ function exEditHtml(ex){
       '<option value="sec"'+(ex.unit==='sec'?' selected':'')+'>Secondes tenues</option></select></label>'+
     '<p class="muted small">Le nom et la consigne se mettent à jour dans toutes les séances déjà assignées. '+
     'En revanche, changer l’unité change le sens des valeurs déjà réglées : un 12 passe de 12 répétitions à 12 secondes.</p>'+
+    '<label class="unicheck"><input type="checkbox" name="uni"'+(ex.uni?' checked':'')+'> Exercice unilatéral — à faire de chaque côté</label>'+
     '<label class="field" for="xe-cue-'+ex.id+'">Consigne affichée pendant l’exercice<textarea id="xe-cue-'+ex.id+'" name="cue" maxlength="300">'+esc(ex.cue||'')+'</textarea></label>'+
     (ui.exCardErr?'<p class="err" role="alert">'+esc(ui.exCardErr)+'</p>':'')+
     '<div class="row"><button class="btn small" type="submit">Enregistrer</button>'+
@@ -870,6 +897,7 @@ function exercisesHtml(){
     '<div class="grid2"><label class="field" for="nx-name">Nom<input id="nx-name" name="name" type="text" maxlength="60"></label>'+
     '<label class="field" for="nx-cat">Catégorie<select id="nx-cat" name="cat">'+CATS.map(function(c){return '<option'+(c===ui.exCat?' selected':'')+'>'+c+'</option>';}).join('')+'</select></label></div>'+
     '<div class="grid2"><label class="field" for="nx-unit">Se mesure en<select id="nx-unit" name="unit"><option value="reps">Répétitions</option><option value="sec">Secondes tenues</option></select></label><span></span></div>'+
+'<label class="unicheck"><input type="checkbox" name="uni"> Exercice unilatéral \u2014 à faire de chaque côté</label>'+
     '<label class="field" for="nx-cue">Consigne affichée pendant l’exercice<textarea id="nx-cue" name="cue" maxlength="300"></textarea></label>'+
     (ui.exErr?'<p class="err" role="alert">'+esc(ui.exErr)+'</p>':'')+
     '<div><button class="btn small" type="submit">Ajouter à la bibliothèque</button></div></form>';
@@ -878,17 +906,19 @@ function exercisesHtml(){
   return h;
 }
 
-function itemHtml(it,i,n){
+function itemHtml(it,i,n,after){
   var ex=EX(it.exId);
-  return '<div class="item"><div class="item-top"><span class="n">'+(i+1)+'</span><span class="nm">'+esc(ex.name)+'</span>'+
+  return '<div class="item'+(it.link&&i<n-1?' link-down':'')+(after?' link-up':'')+'"><div class="item-top"><span class="n">'+(i+1)+'</span><span class="nm">'+esc(ex.name)+'</span>'+
     '<button class="icon" type="button" data-a="ed-up" data-i="'+i+'" aria-label="Monter"'+(i===0?' disabled':'')+'>↑</button>'+
     '<button class="icon" type="button" data-a="ed-down" data-i="'+i+'" aria-label="Descendre"'+(i===n-1?' disabled':'')+'>↓</button>'+
     '<button class="icon" type="button" data-a="ed-rm" data-i="'+i+'" aria-label="Retirer l’exercice">✕</button></div>'+
     '<div class="trio">'+
       '<label class="field" for="it-sets-'+i+'">Séries<input id="it-sets-'+i+'" data-f="sets" data-i="'+i+'" type="number" inputmode="numeric" min="1" max="10" value="'+it.sets+'"></label>'+
-      '<label class="field" for="it-value-'+i+'">'+(ex.unit==='sec'?'Secondes':'Répétitions')+'<input id="it-value-'+i+'" data-f="value" data-i="'+i+'" type="number" inputmode="numeric" min="1" max="300" value="'+it.value+'"></label>'+
+      '<label class="field" for="it-value-'+i+'">'+(ex.unit==='sec'?'Secondes':'Répétitions')+(ex.uni?' (chaque côté)':'')+'<input id="it-value-'+i+'" data-f="value" data-i="'+i+'" type="number" inputmode="numeric" min="1" max="300" value="'+it.value+'"></label>'+
       '<label class="field" for="it-rest-'+i+'">Repos (s)<input id="it-rest-'+i+'" data-f="rest" data-i="'+i+'" type="number" inputmode="numeric" min="0" max="600" value="'+it.rest+'"></label>'+
     '</div>'+
+    (i<n-1?'<button class="linkbtn'+(it.link?' on':'')+'" type="button" data-a="ed-link" data-i="'+i+'" aria-pressed="'+(!!it.link)+'">'+
+      (it.link?'\u2713 Enchaîné avec l\u2019exercice suivant \u00b7 repos seulement après':'+ Enchaîner avec l\u2019exercice suivant')+'</button>':'')+
     '<label class="field" for="it-note-'+i+'">Consigne du jour, effacée une fois la séance faite (facultatif)'+
       '<input id="it-note-'+i+'" data-f="note" data-i="'+i+'" type="text" maxlength="200" value="'+esc(it.note||'')+'" placeholder="Ex. : va moins bas que la dernière fois"></label>'+
     '</div>';
@@ -925,6 +955,7 @@ function editorHtml(){
           CATS.map(function(c){return '<option'+(c===(ui.cat==='Tous'?CATS[0]:ui.cat)?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select></label>'+
         '<label class="field" for="en-unit">Se mesure en<select id="en-unit" name="unit">'+
           '<option value="reps">Répétitions</option><option value="sec">Secondes tenues</option></select></label></div>'+
+'<label class="unicheck"><input type="checkbox" name="uni"> Exercice unilatéral \u2014 à faire de chaque côté</label>'+
         '<label class="field" for="en-cue">Consigne (facultatif)<textarea id="en-cue" name="cue" maxlength="300"></textarea></label>'+
         (ui.edNewErr?'<p class="err" role="alert">'+esc(ui.edNewErr)+'</p>':'')+
         '<div class="row"><button class="btn small" type="submit">Créer et ajouter à la séance</button>'+
@@ -932,7 +963,7 @@ function editorHtml(){
       : '<div><button class="btn sec small" type="button" data-a="ed-new-on">+ Nouvel exercice</button></div>')+
     '</section>';
   h+='<section class="panel"><h3>2 · Règle la séance</h3>'+
-    (s.items.length?s.items.map(function(it,i){return itemHtml(it,i,s.items.length);}).join('')+
+    (s.items.length?s.items.map(function(it,i){return itemHtml(it,i,s.items.length,i>0&&!!s.items[i-1].link);}).join('')+
       '<label class="field" for="ed-exrest">Repos entre exercices (secondes)<input id="ed-exrest" data-f="exRest" type="number" inputmode="numeric" min="0" max="600" value="'+s.exRest+'"></label>'
       :'<p class="muted">Aucun exercice choisi. Touche un exercice dans la liste pour l’ajouter.</p>')+'</section></div>';
   h+=(ui.edErr?'<p class="err" role="alert">'+esc(ui.edErr)+'</p>':'');
@@ -1013,7 +1044,7 @@ function toggleEx(id){
   var a=ui.edit.items,i,idx=-1;
   for(i=0;i<a.length;i++)if(a[i].exId===id)idx=i;
   if(idx>-1)a.splice(idx,1);
-  else a.push({exId:id,sets:3,value:EX(id).unit==='sec'?30:12,rest:45,note:''});
+  else a.push({exId:id,sets:3,value:EX(id).unit==='sec'?30:12,rest:45,note:'',link:false});
 }
 function move(i,dir){
   var a=ui.edit.items,j=i+dir,t;
@@ -1052,7 +1083,7 @@ $app.addEventListener('click',function(e){
     case 'tab-login':ui.loginTab=d.t;ui.err='';ui.info='';render();break;
     case 'logout':
       sb.auth.signOut().catch(function(){});
-      db.auth=null;db.patients=[];db.sessions=[];db.done={};videos={};
+      db.auth=null;db.patients=[];db.sessions=[];db.done={};db.felt={};videos={};
       ui.edit=null;ui.aview='sessions';ui.lf={};ui.err='';nav();break;
     case 'cal-prev':ui.cal=new Date(ui.cal.getFullYear(),ui.cal.getMonth()-1,1);render();break;
     case 'cal-next':ui.cal=new Date(ui.cal.getFullYear(),ui.cal.getMonth()+1,1);render();break;
@@ -1108,6 +1139,7 @@ $app.addEventListener('click',function(e){
     case 'ed-up':move(+d.i,-1);render();break;
     case 'ed-down':move(+d.i,1);render();break;
     case 'ed-rm':ui.edit.items.splice(+d.i,1);render();break;
+    case 'ed-link':{var la=ui.edit.items,lj=+d.i;if(la[lj]&&lj<la.length-1)la[lj].link=!la[lj].link;render();break;}
     case 'ed-adddate':addDate();break;
     case 'ed-rmdate':ui.edit.dates=ui.edit.dates.filter(function(x){return x!==d.d;});render();break;
     case 'ed-save':saveEdit();break;
@@ -1196,12 +1228,13 @@ $app.addEventListener('submit',function(e){
     ui.edNewErr='Création…';render();
     sbCreateExercise({name:en,cat:String(fd.get('cat')),
                       unit:String(fd.get('unit'))==='sec'?'sec':'reps',
+                      uni:!!fd.get('uni'),
                       tempo:4,equip:[],cue:String(fd.get('cue')||'').trim()})
       .then(function(ex){
         db.exercises.push(ex);
         // On l'ajoute directement à la séance en cours de préparation.
         if(ui.edit&&!ui.edit.items.some(function(it){return it.exId===ex.id;}))
-          ui.edit.items.push({exId:ex.id,sets:3,value:ex.unit==='sec'?30:12,rest:45,note:''});
+          ui.edit.items.push({exId:ex.id,sets:3,value:ex.unit==='sec'?30:12,rest:45,note:'',link:false});
         ui.edNew=false;ui.edNewErr='';ui.cat=ex.cat;render();toast('Exercice créé et ajouté');
       })
       .catch(function(e){console.error(e);ui.edNewErr='L’exercice n’a pas pu être créé.';render();});
@@ -1210,15 +1243,16 @@ $app.addEventListener('submit',function(e){
     var xn2=String(fd.get('name')||'').trim();
     if(!xe)return;
     if(!xn2){ui.exCardErr='Donne un nom à l’exercice.';render();return;}
-    var avant={name:xe.name,cat:xe.cat,unit:xe.unit,cue:xe.cue};
+    var avant={name:xe.name,cat:xe.cat,unit:xe.unit,cue:xe.cue,uni:xe.uni};
     xe.name=xn2;xe.cat=String(fd.get('cat'));
     xe.unit=String(fd.get('unit'))==='sec'?'sec':'reps';
+    xe.uni=!!fd.get('uni');
     xe.cue=String(fd.get('cue')||'').trim();
     ui.exEdit=null;ui.exCardErr='';ui.exCat=xe.cat;render();
     sbUpdateExercise(xe).then(function(){toast('Exercice modifié');})
       .catch(function(e){
         console.error(e);
-        xe.name=avant.name;xe.cat=avant.cat;xe.unit=avant.unit;xe.cue=avant.cue;
+        xe.name=avant.name;xe.cat=avant.cat;xe.unit=avant.unit;xe.cue=avant.cue;xe.uni=avant.uni;
         render();toast('La modification n’a pas pu être enregistrée.');
       });
   }else if(kind==='exform'){
@@ -1226,6 +1260,7 @@ $app.addEventListener('submit',function(e){
     if(!xn){ui.exErr='Donne un nom à l’exercice.';render();return;}
     ui.exCat=String(fd.get('cat'));
     sbCreateExercise({name:xn,cat:String(fd.get('cat')),unit:String(fd.get('unit'))==='sec'?'sec':'reps',
+                      uni:!!fd.get('uni'),
                       tempo:4,equip:[],cue:String(fd.get('cue')||'').trim()})
       .then(function(ex){db.exercises.push(ex);ui.exErr='';render();toast('Exercice ajouté');})
       .catch(function(e){console.error(e);ui.exErr='L’exercice n’a pas pu être ajouté.';render();});
@@ -1254,6 +1289,10 @@ function tone(f,d,v,delay){
   }catch(e){}
 }
 function beep(){tone(880,.12,.12);tone(880,.12,.12,.2);}
+/* Décompte : un bip court sur chacune des 5 dernières secondes,
+   puis un bip long et grave quand le minuteur arrive à zéro. */
+function tick(){tone(1174,.09,.10);}
+function endTick(){tone(660,.62,.17);buzz([180,90,180]);}
 function endBeep(){[523,659,784].forEach(function(f,i){tone(f,.7,.14,i*.28);});}
 function requestWake(){try{if(navigator.wakeLock)navigator.wakeLock.request('screen').then(function(l){wake=l;}).catch(function(){});}catch(e){}}
 function releaseWake(){try{if(wake)wake.release();}catch(e){}wake=null;}
@@ -1271,16 +1310,54 @@ var PAUSE='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path
 
 function curItem(){var s=cur();return s?s.items[R.i]:null;}
 
-/* Prépare la série en cours : un exercice de maintien démarre par son
-   chrono, un exercice en répétitions par son repos, que la personne
-   lance une fois la série faite. */
-function armSet(){
-  var it=curItem(),ex=EX(it.exId);
-  R.phase = ex.unit==='sec' ? 'hold' : 'rest';
-  R.left  = R.phase==='hold' ? it.value : it.rest;
+/* Un bloc regroupe les exercices enchaînés : on les fait à la suite, puis
+   on prend le repos, puis on recommence la série suivante. Un exercice
+   seul forme un bloc d'un seul élément. */
+function makeBlocks(items){
+  var out=[],b=[],i;
+  for(i=0;i<items.length;i++){
+    b.push(i);
+    if(!(items[i].link&&i<items.length-1)){out.push(b);b=[];}
+  }
+  if(b.length)out.push(b);
+  return out;
+}
+function blkSets(s,blk){return s.items[blk[0]].sets;}
+function blkRest(s,blk){return s.items[blk[blk.length-1]].rest;}
+function inChain(){return R.blk.length>1;}
+function lastOfChain(){return R.k===R.blk.length-1;}
+function lastSet(){return R.set>=blkSets(cur(),R.blk)-1;}
+
+function goTo(bi,k,set,auto){
+  R.bi=bi;R.blk=R.blocks[bi];R.k=k;R.set=set;R.i=R.blk[k];
+  armSet(auto);
+}
+function nextInChain(auto){goTo(R.bi,R.k+1,R.set,auto);}
+function nextSet(auto){goTo(R.bi,0,R.set+1,auto);}
+function nextBlock(){
+  if(R.bi<R.blocks.length-1){goTo(R.bi+1,0,0,false);renderRunner();}
+  else finishRun();
+}
+/* Un exercice unilatéral chronométré se tient d'abord d'un côté, puis de l'autre. */
+function uniTimed(ex){return !!(ex.uni&&ex.unit==='sec');}
+
+/* Prépare l'étape en cours :
+   - maintien : le chrono compte le temps de maintien ;
+   - répétitions en fin de bloc : le repos est armé, la personne le lance
+     une fois sa série faite ;
+   - répétitions enchaînées : pas de chrono, on passe à l'exercice suivant. */
+function armSet(auto){
+  var s=cur(),it=s.items[R.i],ex=EX(it.exId);
+  R.side=0;
+  if(ex.unit==='sec'){R.phase='hold';R.left=it.value;}
+  else if(lastOfChain()){R.phase='rest';R.left=blkRest(s,R.blk);}
+  else{R.phase='go';R.left=0;}
   R.mode='ready';R.end=0;
+  // Après un repos, le chrono du maintien suivant repart tout seul.
+  if(auto&&R.phase==='hold'&&R.left>0){R.mode='run';R.end=Date.now()+R.left*1000;}
 }
 function startTimer(){
+  if(R.phase==='go'){nextInChain();renderRunner();return;}
   if(R.left<=0){onZero();return;}
   R.mode='run';R.end=Date.now()+R.left*1000;ensureAudio();renderRunner();
 }
@@ -1289,42 +1366,58 @@ function pauseTimer(){
   R.mode='ready';R.end=0;renderRunner();
 }
 function onZero(){
-  var it=curItem();
-  beep();buzz([140,70,140]);
+  var s=cur(),it=s.items[R.i],ex=EX(it.exId),rest;
+  endTick();
   if(R.phase==='hold'){
-    if(R.set<it.sets-1){
-      // Le repos s'enclenche tout seul après un maintien.
-      R.phase='rest';R.left=it.rest;
-      if(it.rest>0){R.mode='run';R.end=Date.now()+it.rest*1000;}
-      else{R.set++;armSet();}
-    }else{R.mode='done';R.end=0;R.left=0;}
+    if(uniTimed(ex)&&R.side===0){
+      // Changement de côté : le chrono repart aussitôt.
+      R.side=1;R.left=it.value;R.mode='run';R.end=Date.now()+R.left*1000;
+    }else if(!lastOfChain()){
+      nextInChain(true);
+    }else{
+      // Le repos s'enclenche tout seul après un maintien, y compris après
+      // la dernière série, avant de passer à l'exercice suivant.
+      rest=blkRest(s,R.blk);
+      if(rest>0){R.phase='rest';R.left=rest;R.mode='run';R.end=Date.now()+rest*1000;}
+      else if(!lastSet())nextSet(true);
+      else{R.mode='done';R.end=0;R.left=0;}
+    }
   }else{
-    R.set++;
-    if(R.set>it.sets-1){R.mode='done';R.end=0;R.left=0;}
-    else armSet();
+    if(!lastSet())nextSet(true);
+    else{R.mode='done';R.end=0;R.left=0;}
   }
   renderRunner();
 }
 function nextExercise(){
+  if(R.mode!=='done'&&R.phase==='go'){nextInChain();renderRunner();return;}
+  nextBlock();
+}
+
+/* Ce qui vient après l'exercice affiché. */
+function upNext(){
   var s=cur();
-  if(R.i<s.items.length-1){R.i++;R.set=0;armSet();renderRunner();}
-  else finishRun();
+  if(!lastOfChain())return {lab:'Enchaîne avec',name:EX(s.items[R.blk[R.k+1]].exId).name};
+  if(!lastSet())return {lab:'Repos, puis',name:EX(s.items[R.blk[0]].exId).name};
+  if(R.bi<R.blocks.length-1)return {lab:'Ensuite',name:EX(s.items[R.blocks[R.bi+1][0]].exId).name};
+  return {lab:'',name:'Dernier exercice de la séance'};
 }
 
 function timerHtml(){
-  var it=curItem(),ex=EX(it.exId),last=R.set===it.sets-1;
-  var phase,num,icon,ghost=false;
+  var ex=EX(cur().items[R.i].exId),phase,num,icon,ghost=false;
   if(R.mode==='done'){
-    phase='Exercice terminé';num='✓';icon=null;
+    phase='Exercice terminé';num='\u2713';icon=null;
+  }else if(R.phase==='go'){
+    phase='Enchaîné \u00b7 pas de repos';num='\u2014';icon=null;
   }else if(R.phase==='hold'){
-    phase = R.mode==='run' ? 'Maintien' : 'Maintien · appuie pour démarrer';
+    var cote = uniTimed(ex) ? ' \u00b7 côté '+(R.side+1) : '';
+    phase = R.mode==='run' ? 'Maintien'+cote : 'Maintien'+cote+' \u00b7 appuie pour démarrer';
     num = fmtClock(R.mode==='run'?R.leftShown():R.left);
     icon = R.mode==='run' ? PAUSE : PLAY;
     ghost = R.mode!=='run';
   }else{
     if(R.mode==='run'){phase='Repos';icon=PAUSE;}
-    else if(last&&ex.unit!=='sec'){phase='Dernière série · pas de repos après';icon=PLAY;ghost=true;}
-    else{phase='Repos · appuie une fois ta série faite';icon=PLAY;ghost=true;}
+    else if(lastSet()&&ex.unit!=='sec'){phase='Dernière série \u00b7 pas de repos après';icon=PLAY;ghost=true;}
+    else{phase='Repos \u00b7 appuie une fois ta série faite';icon=PLAY;ghost=true;}
     num = fmtClock(R.mode==='run'?R.leftShown():R.left);
   }
   var btn = icon ? '<button class="x-play'+(ghost?' ghosted':'')+'" type="button" data-r="toggle" aria-label="'+
@@ -1339,35 +1432,58 @@ function fmtClock(sec){
   return Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');
 }
 
+function ratingHtml(){
+  var b='',i;
+  for(i=1;i<=10;i++)b+='<button class="rate" type="button" data-r="rate" data-n="'+i+'">'+i+'</button>';
+  return '<div class="r-inner r-finish"><p class="r-kicker">Séance terminée</p>'+
+    '<h2 class="r-name">Comment l\u2019as-tu sentie ?</h2>'+
+    '<p class="r-set">1 = très facile \u00b7 10 = très dure</p>'+
+    '<div class="rategrid">'+b+'</div>'+
+    '<p class="muted small">Aurèle voit ta note et adapte la suite si besoin.</p></div>';
+}
 function runnerHtml(){
   var s=cur(),n=s.items.length;
+  if(R.finished&&R.ask)return ratingHtml();
   if(R.finished){
     var mins=Math.max(1,Math.round((Date.now()-R.t0)/60000));
     return '<div class="r-inner r-finish"><p class="r-kicker">Bravo</p><h2 class="r-name">Séance terminée</h2>'+
-      '<p class="r-set">'+plural(n,'exercice')+' · '+mins+' min</p>'+
+      '<p class="r-set">'+plural(n,'exercice')+' \u00b7 '+mins+' min'+
+        (R.rate?' \u00b7 ressenti '+R.rate+'/10':'')+'</p>'+
       '<button class="btn big" type="button" data-r="close">Retour au calendrier</button></div>';
   }
   var it=s.items[R.i],ex=EX(it.exId);
+  var side = ex.uni ? '<em class="side">de chaque côté</em>' : '';
   var dose = ex.unit==='sec'
-    ? '<div><span class="lab">Maintien</span><strong>'+it.value+' s</strong></div>'
-    : '<div><span class="lab">Répétitions</span><strong>'+it.value+'</strong></div>';
+    ? '<div><span class="lab">Maintien</span><strong>'+it.value+' s</strong>'+side+'</div>'
+    : '<div><span class="lab">Répétitions</span><strong>'+it.value+'</strong>'+side+'</div>';
+  var restCell = lastOfChain()
+    ? '<div><span class="lab">Repos</span><strong>'+blkRest(s,R.blk)+' s</strong></div>'
+    : '<div><span class="lab">Après</span><strong>enchaîner</strong></div>';
   var cue = ex.cue ? '<section class="x-card x-cue"><span class="lab">Consigne</span><p>'+esc(ex.cue)+'</p></section>' : '';
   var note = it.note ? '<section class="x-card x-note"><span class="lab">Pour cette séance</span><p>'+esc(it.note)+'</p></section>' : '';
-  var last = R.i===n-1;
+  var nx='';
+  if(lastSet()||inChain()){
+    var u=upNext();
+    nx='<p class="x-next">'+(u.lab?'<span class="lab">'+esc(u.lab)+'</span>':'')+'<b>'+esc(u.name)+'</b></p>';
+  }
+  var lbl;
+  if(R.mode!=='done'&&R.phase==='go')lbl='Série faite \u00b7 exercice suivant';
+  else if(R.bi===R.blocks.length-1)lbl='Terminer la séance';
+  else lbl=inChain()?'Passer l\u2019enchaînement':'Exercice suivant';
   return '<div class="r-inner">'+
     '<header class="x-head"><h2 class="x-name">'+esc(ex.name)+'</h2>'+
-      '<p class="x-idx">Ex : '+(R.i+1)+'/'+n+'</p></header>'+
+      '<p class="x-idx">Ex : '+(R.i+1)+'/'+n+
+        (inChain()?'<small>enchaînement '+(R.k+1)+'/'+R.blk.length+'</small>':'')+'</p></header>'+
     '<div class="x-scroll">'+
       '<div class="x-video">'+videoHtml(ex)+'</div>'+
       cue+note+
       '<section class="x-card x-dose">'+
-        '<div><span class="lab">Séries</span><strong>'+(R.set+1)+' / '+it.sets+'</strong></div>'+
-        dose+
-        '<div><span class="lab">Repos</span><strong>'+it.rest+' s</strong></div>'+
+        '<div><span class="lab">Séries</span><strong>'+(R.set+1)+' / '+blkSets(s,R.blk)+'</strong></div>'+
+        dose+restCell+
       '</section>'+
     '</div>'+
-    '<div class="x-foot">'+timerHtml()+
-      '<button class="btn big" type="button" data-r="next">'+(last?'Terminer la séance':'Exercice suivant')+'</button>'+
+    '<div class="x-foot">'+nx+timerHtml()+
+      '<button class="btn big" type="button" data-r="next">'+lbl+'</button>'+
       '<button class="x-quit" type="button" data-r="quit">Quitter la séance</button>'+
     '</div></div>';
 }
@@ -1377,19 +1493,31 @@ function renderRunner(){
   $run.innerHTML=runnerHtml();
 }
 function startRun(sid,date){
-  R={sid:sid,date:date,i:0,set:0,phase:'hold',mode:'ready',left:0,end:0,
+  R={sid:sid,date:date,i:0,bi:0,k:0,set:0,side:0,blk:null,blocks:null,phase:'hold',mode:'ready',left:0,end:0,
      t0:Date.now(),finished:false,quitAsk:false,
      leftShown:function(){return Math.max(0,Math.ceil((this.end-Date.now())/1000));}};
-  armSet();
+  var s0=cur();
+  if(!s0||!s0.items.length){R=null;return;}
+  R.blocks=makeBlocks(s0.items);
+  goTo(0,0,0,false);
   ensureAudio();requestWake();
   document.body.style.overflow='hidden';
   renderRunner();
   clearInterval(rt);rt=setInterval(rtick,200);
 }
 function finishRun(){
-  R.finished=true;
-  if(!ui.preview){db.done[R.sid+'|'+R.date]=true;sbSetDone(R.sid,R.date);}
+  R.finished=true;R.ask=true;R.rate=null;
   clearInterval(rt);endBeep();buzz([200,80,200,80,320]);releaseWake();
+  renderRunner();
+}
+/* La personne note la difficulté de la séance avant de revenir au calendrier. */
+function sendRate(n){
+  R.rate=n;R.ask=false;
+  if(!ui.preview){
+    db.done[R.sid+'|'+R.date]=true;
+    db.felt[R.sid+'|'+R.date]=n;
+    sbSetDone(R.sid,R.date,n);
+  }
   renderRunner();
 }
 function closeRunner(){
@@ -1401,7 +1529,10 @@ function closeRunner(){
 function rtick(){
   if(!R||R.finished||R.mode!=='run')return;
   var left=R.leftShown();
-  if(left!==R.left){R.left=left;setText('xnum',fmtClock(left));}
+  if(left!==R.left){
+    R.left=left;setText('xnum',fmtClock(left));
+    if(left>0&&left<=5){tick();buzz(25);}
+  }
   if(Date.now()>=R.end)onZero();
 }
 $run.addEventListener('click',function(e){
@@ -1411,6 +1542,7 @@ $run.addEventListener('click',function(e){
   if(a==='toggle'){if(R.mode==='run')pauseTimer();else startTimer();}
   else if(a==='next')nextExercise();
   else if(a==='quit'){if(R.quitAsk)closeRunner();else{R.quitAsk=true;b.textContent='Confirmer : quitter la séance';}}
+  else if(a==='rate')sendRate(+b.getAttribute('data-n'));
   else if(a==='close')closeRunner();
 });
 document.addEventListener('visibilitychange',function(){if(R&&!R.finished&&document.visibilityState==='visible')requestWake();});
