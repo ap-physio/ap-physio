@@ -27,7 +27,7 @@ Dernière mise à jour : 26 octobre 2026
 | Catégories de données | Prénom, nom, adresse e-mail, mot de passe haché, matériel à domicile, séances attribuées, dates, séances marquées comme faites |
 | Données sensibles | Oui, par prudence : l'existence d'un compte chez un physiothérapeute peut révéler une information de santé |
 | Base | Inscription volontaire et exécution de la prestation convenue |
-| Durée de conservation | Tant que le compte existe ; effacement dans les 30 jours après suppression ; suppression des comptes inutilisés après 3 ans, avec avertissement préalable |
+| Durée de conservation | Tant que le compte existe. La personne peut le supprimer elle-même depuis son espace : l'effacement est alors immédiat et irréversible. L'administrateur peut aussi le faire depuis la fiche de la personne. Suppression des comptes inutilisés après 3 ans, avec avertissement préalable |
 | Destinataires | Aucun tiers. Sous-traitant : Supabase, Inc. |
 | Transfert à l'étranger | Irlande (EEE), protection reconnue comme adéquate par la Suisse |
 | Mesures de sécurité | Chiffrement en transit ; cloisonnement par compte au niveau de la base ; rôle administrateur non modifiable par l'utilisateur ; accès administrateur réservé au responsable ; vidéos servies par adresses signées temporaires |
@@ -80,7 +80,6 @@ visiteurs vers cet agenda.
 
 - Télécharger le contrat de traitement des données de Netlify depuis le tableau de bord et en conserver une copie datée avec ce registre.
 - Vérifier sur dataprivacyframework.gov si Netlify figure parmi les entreprises certifiées au Swiss-U.S. Data Privacy Framework, et le noter ici le cas échéant.
-- Ajouter dans l'espace coaching une fonction de suppression de compte, aujourd'hui faite à la main en base.
 
 ## En cas de violation de données
 

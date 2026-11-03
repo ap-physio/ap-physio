@@ -127,6 +127,14 @@ ol{padding:0;list-style:none}
 .btn.big{min-height:56px;font-size:1.05rem}
 .btn.danger{background:transparent;border-color:var(--danger);color:var(--danger)}
 .btn.danger.on{background:var(--danger);color:var(--surface)}
+.danger-zone{border-color:var(--danger)}
+.danger-zone h3{color:var(--danger)}
+.mon-compte{display:grid;gap:10px;padding:14px;border:1px solid var(--line);border-radius:3px;background:var(--bg)}
+.mon-compte h2{margin:0;font:600 1.05rem/1.2 var(--font-display)}
+.mon-compte p{margin:0}
+.bye{display:grid;gap:14px;justify-items:start;padding:22px;background:var(--surface);border:1px solid var(--line);border-radius:3px}
+.bye h1{margin:0;font:400 1.7rem/1.2 var(--font-display)}
+.bye p{margin:0}
 .btn[disabled]{opacity:.45;cursor:default}
 .btn:active{transform:translateY(1px)}
 @media (hover:hover){.btn:hover{filter:brightness(1.08)}}
@@ -576,6 +584,13 @@ function sbSetDone(sid, jour, ressenti){
     });
   });
 }
+/* Efface le compte et tout ce qui s'y rattache. Sans identifiant, c'est
+   son propre compte ; avec, c'est celui de quelqu'un, réservé à l'admin. */
+function sbSupprimerCompte(id){
+  return sb.rpc('supprimer_compte', id?{p_id:id}:{}).then(function(r){
+    if(r.error) throw r.error;
+  });
+}
 function sbDeleteSession(sid){
   return sb.from('seances').delete().eq('id', sid).then(function(r){
     if(r.error) throw r.error;
@@ -648,7 +663,7 @@ function sbUploadVideo(exId, file){
     });
 }
 
-var ui={pview:'seances',pid:null,preview:null,edNew:false,edNewErr:'',exEdit:null,exDel:null,exCardErr:'',exCat:CATS[0],sel:todayIso,cal:firstOfMonth(new Date()),aview:'sessions',edit:null,cat:'Tous',newDate:todayIso,err:'',edErr:'',lf:{},confirmDel:null,loginTab:'in'};
+var ui={pview:'seances',pid:null,preview:null,edNew:false,edNewErr:'',exEdit:null,exDel:null,exCardErr:'',exCat:CATS[0],sel:todayIso,cal:firstOfMonth(new Date()),aview:'sessions',edit:null,cat:'Tous',newDate:todayIso,err:'',edErr:'',lf:{},confirmDel:null,delAcc:null,delMine:false,delBusy:false,bye:false,loginTab:'in'};
 var $app=document.getElementById('app'),$run=document.getElementById('runner'),$toast=document.getElementById('toast');
 
 function EX(id){
@@ -679,7 +694,8 @@ function toast(m){$toast.textContent=m;$toast.hidden=false;clearTimeout(tt);tt=s
 function render(){
   if(db.auth&&db.auth.role==='patient'&&!patient())db.auth=null;
   var corps;
-  if(!db.auth)corps=loginHtml();
+  if(ui.bye)corps=byeHtml();
+  else if(!db.auth)corps=loginHtml();
   else if(db.auth.role==='admin')corps=headerHtml()+(ui.preview?previewHtml():adminHtml());
   else corps=headerHtml()+patientHtml();
   $app.innerHTML=corps;
@@ -736,12 +752,34 @@ function breathHtml(){
   }).join('')+'</ol>';
   return h+'<p class="note">Assis ou allongé, jamais dans l’eau, au volant ou debout. À éviter sans avis médical en cas de grossesse, d’épilepsie ou de problème cardiaque. Arrête-toi si tu te sens mal.</p>';
 }
+function byeHtml(){
+  return '<main class="app narrow"><section class="bye"><h1>Compte supprimé</h1>'+
+    '<p>Tes séances, tes dates et tout ce que tu avais renseigné ont été effacés.</p>'+
+    '<p class="muted small">Tu peux recréer un compte quand tu veux avec la même adresse e-mail.</p>'+
+    '<button class="btn" type="button" data-a="bye-ok">Revenir à l\u2019accueil</button></section></main>';
+}
 function patientHtml(){
   var p=patient();
   if(ui.pview==='breath')
     return '<main class="app narrow"><h1 class="hello">Bonjour '+esc(p.name)+'</h1>'+patientTabs()+breathHtml()+'</main>';
   return '<main class="app narrow two"><h1 class="hello">Bonjour '+esc(p.name)+'</h1>'+patientTabs()+
-    '<div class="pgrid">'+calendarHtml(p.id)+matosHtml(p)+'</div>'+dayHtml(p.id)+'</main>';
+    '<div class="pgrid">'+calendarHtml(p.id)+matosHtml(p)+'</div>'+dayHtml(p.id)+monCompteHtml()+'</main>';
+}
+/* La personne peut effacer son compte elle-même, en deux temps. */
+function monCompteHtml(){
+  if(ui.preview)return '<section class="mon-compte"><h2>Mon compte</h2>'+
+    '<p class="muted small">En aperçu, le bouton de suppression n\u2019est pas affiché.</p></section>';
+  return '<section class="mon-compte"><h2>Mon compte</h2>'+
+    (ui.delMine
+      ? '<p>Tout sera effacé : ton accès, tes séances, tes dates et tes ressentis. '+
+        'C\u2019est définitif, et Aurèle ne pourra pas les retrouver.</p>'+
+        '<div class="row"><button class="btn small danger on" type="button" data-a="mine-del-go"'+
+          (ui.delBusy?' disabled':'')+'>'+(ui.delBusy?'Suppression…':'Oui, supprimer mon compte')+'</button>'+
+        '<button class="btn sec small" type="button" data-a="mine-del-off">Annuler</button></div>'
+      : '<p class="muted small">Tu peux effacer ton compte quand tu veux. Tes séances et tout ce que tu as renseigné '+
+        'disparaissent avec lui.</p>'+
+        '<div><button class="btn sec small danger" type="button" data-a="mine-del-on">Supprimer mon compte</button></div>')+
+    '</section>';
 }
 /* La personne déclare elle-même ce dont elle dispose, et peut le préciser. */
 function matosHtml(p){
@@ -954,6 +992,16 @@ function patientPageHtml(){
     '<section class="pcard">'+equipHtml(p)+'</section>'+
     '<section class="pcard"><h3>Séances</h3>'+
     (ss.length?ss.map(sessRow).join(''):'<p class="muted">Aucune séance assignée. Utilise « Ajouter une séance » ci-dessus.</p>')+
+    '</section>'+
+    '<section class="pcard danger-zone"><h3>Supprimer ce compte</h3>'+
+    '<p class="muted small">Efface définitivement le compte de '+esc(p.name)+' : son accès, ses séances, ses dates et ses ressentis. '+
+      'Les exercices de ta bibliothèque et tes vidéos ne bougent pas. Ton dossier de physiothérapie, qui vit ailleurs, non plus.</p>'+
+    (ui.delAcc===p.id
+      ? '<p class="warnline">Dernière confirmation : cette suppression est définitive.</p>'+
+        '<div class="row"><button class="btn small danger on" type="button" data-a="acc-del-go" data-p="'+p.id+'"'+
+          (ui.delBusy?' disabled':'')+'>'+(ui.delBusy?'Suppression…':'Oui, supprimer ce compte')+'</button>'+
+        '<button class="btn sec small" type="button" data-a="acc-del-off">Annuler</button></div>'
+      : '<div><button class="btn small danger" type="button" data-a="acc-del-on" data-p="'+p.id+'">Supprimer le compte de '+esc(p.name)+'</button></div>')+
     '</section>';
 }
 function exercisesHtml(){
@@ -1148,6 +1196,7 @@ $app.addEventListener('click',function(e){
   var a=b.getAttribute('data-a'),d=b.dataset;
   switch(a){
     case 'tab-login':ui.loginTab=d.t;ui.err='';ui.info='';render();break;
+    case 'bye-ok':ui.bye=false;nav();break;
     case 'logout':
       sb.auth.signOut().catch(function(){});
       db.auth=null;db.patients=[];db.sessions=[];db.done={};db.felt={};videos={};
@@ -1161,6 +1210,40 @@ $app.addEventListener('click',function(e){
     case 'preview-on':ui.preview=d.p;ui.pview='seances';ui.sel=todayIso;ui.cal=firstOfMonth(new Date());nav();break;
     case 'preview-off':ui.preview=null;nav();break;
     case 'mt-tog':matosToggle(d.v);break;
+    case 'acc-del-on':ui.delAcc=d.p;render();break;
+    case 'acc-del-off':ui.delAcc=null;render();break;
+    case 'acc-del-go':
+      if(ui.delBusy)break;
+      ui.delBusy=true;render();
+      sbSupprimerCompte(d.p)
+        .then(function(){ return loadAll(); })
+        .then(function(){
+          ui.delBusy=false;ui.delAcc=null;ui.pid=null;ui.aview='sessions';
+          nav();toast('Compte supprimé');
+        })
+        .catch(function(e){
+          ui.delBusy=false;ui.delAcc=null;render();
+          oops(e,'Le compte');
+        });
+      break;
+    case 'mine-del-on':ui.delMine=true;render();break;
+    case 'mine-del-off':ui.delMine=false;render();break;
+    case 'mine-del-go':
+      if(ui.delBusy)break;
+      ui.delBusy=true;render();
+      sbSupprimerCompte(null)
+        .then(function(){
+          return sb.auth.signOut().catch(function(){});
+        })
+        .then(function(){
+          db.auth=null;db.patients=[];db.sessions=[];db.done={};db.felt={};videos={};
+          ui.delBusy=false;ui.delMine=false;ui.bye=true;render();
+        })
+        .catch(function(e){
+          ui.delBusy=false;ui.delMine=false;render();
+          oops(e,'Ton compte');
+        });
+      break;
     case 'ptab-s':ui.pview='seances';render();break;
     case 'ptab-b':ui.pview='breath';render();break;
     case 'btog':bp[d.k]=!bp[d.k];bsave();render();if(d.k==='sound'&&bp.sound){ensureAudio();tone(523,.3,.1);}if(d.k==='vibe'&&bp.vibe)bbuzz(40);break;
