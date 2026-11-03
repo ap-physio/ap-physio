@@ -200,10 +200,13 @@ create table if not exists public.seance_dates (
   faite     boolean not null default false,
   -- Ressenti de la personne à la fin de la séance : 1 très facile, 10 très dure.
   ressenti  smallint check (ressenti is null or ressenti between 1 and 10),
+  -- Petit mot facultatif de la personne, 500 caractères au plus.
+  commentaire text check (commentaire is null or char_length(commentaire) <= 500),
   unique (seance_id, jour)
 );
 
 alter table public.seance_dates add column if not exists ressenti smallint;
+alter table public.seance_dates add column if not exists commentaire text;
 do $sd$
 begin
   if not exists (select 1 from pg_constraint where conname = 'seance_dates_ressenti_ok') then
@@ -213,6 +216,15 @@ begin
   end if;
 end
 $sd$;
+do $sc$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'seance_dates_commentaire_ok') then
+    alter table public.seance_dates
+      add constraint seance_dates_commentaire_ok
+      check (commentaire is null or char_length(commentaire) <= 500);
+  end if;
+end
+$sc$;
 
 create index if not exists seance_dates_jour_idx on public.seance_dates (jour);
 
@@ -317,9 +329,11 @@ create policy "dates gerees par l admin" on public.seance_dates
 --    lui appartient.
 -- ---------------------------------------------------------------------
 drop function if exists public.terminer_seance(uuid, date);
+drop function if exists public.terminer_seance(uuid, date, integer);
 
 create or replace function public.terminer_seance(p_seance uuid, p_jour date,
-                                                  p_ressenti integer default null)
+                                                  p_ressenti integer default null,
+                                                  p_commentaire text default null)
 returns void
 language plpgsql
 security definer
@@ -336,7 +350,8 @@ begin
 
   update public.seance_dates
      set faite = true,
-         ressenti = coalesce(p_ressenti, ressenti)
+         ressenti = coalesce(p_ressenti, ressenti),
+         commentaire = coalesce(nullif(left(btrim(p_commentaire), 500), ''), commentaire)
    where seance_id = p_seance and jour = p_jour;
 
   update public.seance_exercices
@@ -345,8 +360,8 @@ begin
 end;
 $$;
 
-revoke all on function public.terminer_seance(uuid, date, integer) from public;
-grant execute on function public.terminer_seance(uuid, date, integer) to authenticated;
+revoke all on function public.terminer_seance(uuid, date, integer, text) from public;
+grant execute on function public.terminer_seance(uuid, date, integer, text) to authenticated;
 
 -- ---------------------------------------------------------------------
 --    Suppression d'un compte. Sans argument, c'est son propre compte ;

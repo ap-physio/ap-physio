@@ -24,7 +24,7 @@ Dernière mise à jour : 26 octobre 2026
 | --- | --- |
 | Finalité | Donner accès aux séances d'exercices préparées pour la personne, et en suivre l'avancement |
 | Catégories de personnes | Patients du cabinet et clients du coaching sportif ayant créé un compte |
-| Catégories de données | Prénom, nom, adresse e-mail, mot de passe haché, matériel à domicile, séances attribuées, dates, séances marquées comme faites |
+| Catégories de données | Prénom, nom, adresse e-mail, mot de passe haché, matériel à domicile, séances attribuées, dates, séances marquées comme faites, note de difficulté (1 à 10) et commentaire facultatif de fin de séance (500 caractères au plus) |
 | Données sensibles | Oui, par prudence : l'existence d'un compte chez un physiothérapeute peut révéler une information de santé |
 | Base | Inscription volontaire et exécution de la prestation convenue |
 | Durée de conservation | Tant que le compte existe. La personne peut le supprimer elle-même depuis son espace : l'effacement est alors immédiat et irréversible. L'administrateur peut aussi le faire depuis la fiche de la personne. Suppression des comptes inutilisés après 3 ans, avec avertissement préalable |

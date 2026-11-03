@@ -303,6 +303,13 @@ button.cell{cursor:pointer}
 .rate{appearance:none;aspect-ratio:1;border:1px solid var(--line);border-radius:3px;background:var(--surface);
   color:var(--ink);font:700 1.25rem var(--font-display);cursor:pointer;transition:background .12s,border-color .12s}
 .rate:hover,.rate:focus-visible{border-color:var(--accent);background:var(--soft);color:var(--accent-ink);outline:none}
+.rate.on{background:var(--accent);border-color:var(--accent);color:#1b1a17}
+.rcom{display:grid;gap:6px;width:100%;max-width:420px;margin-inline:auto;text-align:left}
+.rcom textarea{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:3px;
+  background:var(--surface);color:var(--ink);font:400 1rem/1.4 var(--font-body);resize:vertical}
+.rcom textarea:focus{border-color:var(--accent);outline:none}
+.r-finish .btn.big[disabled]{opacity:.45;cursor:default}
+.s-com{margin:2px 0 0;color:var(--ink);font-size:.86rem;line-height:1.35;font-style:italic}
 .unicheck{display:flex;align-items:center;gap:10px;font:500 .95rem/1.3 var(--font-body);cursor:pointer}
 .unicheck input{width:20px;height:20px;flex:none;accent-color:var(--accent)}
 .x-dose .side{display:block;margin-top:3px;font-style:normal;color:var(--accent-ink);font-size:.72rem;letter-spacing:.03em}
@@ -569,12 +576,14 @@ function loadAll(){
     });
     db.done = {};
     db.felt = {};
+    db.comm = {};
     r[4].data.forEach(function(d){
       var o = byId[d.seance_id];
       if(!o) return;
       if(o.dates.indexOf(d.jour) < 0) o.dates.push(d.jour);
       if(d.faite) db.done[d.seance_id + '|' + d.jour] = true;
       if(d.ressenti != null) db.felt[d.seance_id + '|' + d.jour] = d.ressenti;
+      if(d.commentaire) db.comm[d.seance_id + '|' + d.jour] = d.commentaire;
     });
     db.sessions.forEach(function(o){ o.dates.sort(); });
     return loadVideos();
@@ -611,9 +620,10 @@ function sbExerciceEquip(ex){
   sb.from('exercices').update({materiel:ex.equip}).eq('id', ex.id)
     .then(function(r){ if(r.error) oops(r.error, 'Le matériel'); });
 }
-function sbSetDone(sid, jour, ressenti){
+function sbSetDone(sid, jour, ressenti, commentaire){
   return sb.rpc('terminer_seance', {p_seance:sid, p_jour:jour,
-                                    p_ressenti:(ressenti==null?null:ressenti)}).then(function(r){
+                                    p_ressenti:(ressenti==null?null:ressenti),
+                                    p_commentaire:(commentaire?commentaire:null)}).then(function(r){
     if(r.error){oops(r.error, 'La séance faite');return;}
     // Les consignes ponctuelles ont été effacées côté serveur.
     db.sessions.forEach(function(x){
@@ -808,7 +818,7 @@ function monCompteHtml(){
     '<p class="muted small">En aperçu, le bouton de suppression n\u2019est pas affiché.</p></section>';
   return '<section class="mon-compte"><h2>Mon compte</h2>'+
     (ui.delMine
-      ? '<p>Tout sera effacé : ton accès, tes séances, tes dates et tes ressentis. '+
+      ? '<p>Tout sera effacé : ton accès, tes séances, tes dates, tes ressentis et tes commentaires. '+
         'C\u2019est définitif, et Aurèle ne pourra pas les retrouver.</p>'+
         '<div class="row"><button class="btn small danger on" type="button" data-a="mine-del-go"'+
           (ui.delBusy?' disabled':'')+'>'+(ui.delBusy?'Suppression…':'Oui, supprimer mon compte')+'</button>'+
@@ -927,14 +937,18 @@ function adminHtml(){
   return '<main class="app wide">'+tabs+corps+'</main>';
 }
 function sessRow(s){
-  var ds=s.dates.slice(0,4).map(function(d){
+  var shown=s.dates.slice(0,4);
+  var ds=shown.map(function(d){
     var f=db.felt[s.id+'|'+d];
     return fmtShort.format(parse(d))+(f?' ('+f+'/10)':'');
   }).join(' · ')+(s.dates.length>4?' +'+(s.dates.length-4):'');
+  var com=shown.filter(function(d){return db.comm[s.id+'|'+d];}).map(function(d){
+    return '<p class="s-com">\u00ab '+esc(db.comm[s.id+'|'+d])+' \u00bb <span class="muted small">\u00b7 '+esc(fmtShort.format(parse(d)))+'</span></p>';
+  }).join('');
   var c=ui.confirmDel===s.id;
   return '<div class="srow"><div class="s-main"><p class="s-title">'+esc(s.title)+'</p>'+
     '<p class="meta">≈ '+fmtDur(sessTime(s))+' · '+plural(s.items.length,'exercice')+'</p>'+
-    '<p class="meta">'+(ds||'Aucune date')+'</p></div>'+
+    '<p class="meta">'+(ds||'Aucune date')+'</p>'+com+'</div>'+
     '<div class="s-act"><button class="btn sec small" type="button" data-a="edit" data-s="'+s.id+'">Modifier</button>'+
     '<button class="btn small danger'+(c?' on':'')+'" type="button" data-a="del" data-s="'+s.id+'">'+(c?'Confirmer':'Supprimer')+'</button></div></div>';
 }
@@ -1051,7 +1065,7 @@ function patientPageHtml(){
     (ss.length?ss.map(sessRow).join(''):'<p class="muted">Aucune séance assignée. Utilise « Ajouter une séance » ci-dessus.</p>')+
     '</section>'+
     '<section class="pcard danger-zone"><h3>Supprimer ce compte</h3>'+
-    '<p class="muted small">Efface définitivement le compte de '+esc(p.name)+' : son accès, ses séances, ses dates et ses ressentis. '+
+    '<p class="muted small">Efface définitivement le compte de '+esc(p.name)+' : son accès, ses séances, ses dates, ses ressentis et ses commentaires. '+
       'Les exercices de ta bibliothèque et tes vidéos ne bougent pas. Ton dossier de physiothérapie, qui vit ailleurs, non plus.</p>'+
     (ui.delAcc===p.id
       ? '<p class="warnline">Dernière confirmation : cette suppression est définitive.</p>'+
@@ -1280,7 +1294,7 @@ $app.addEventListener('click',function(e){
     case 'bye-ok':ui.bye=false;nav();break;
     case 'logout':
       sb.auth.signOut().catch(function(){});
-      db.auth=null;db.patients=[];db.sessions=[];db.done={};db.felt={};videos={};
+      db.auth=null;db.patients=[];db.sessions=[];db.done={};db.felt={};db.comm={};videos={};
       ui.edit=null;ui.aview='sessions';ui.lf={};ui.err='';nav();break;
     case 'cal-prev':ui.cal=new Date(ui.cal.getFullYear(),ui.cal.getMonth()-1,1);render();break;
     case 'cal-next':ui.cal=new Date(ui.cal.getFullYear(),ui.cal.getMonth()+1,1);render();break;
@@ -1317,7 +1331,7 @@ $app.addEventListener('click',function(e){
           return sb.auth.signOut().catch(function(){});
         })
         .then(function(){
-          db.auth=null;db.patients=[];db.sessions=[];db.done={};db.felt={};videos={};
+          db.auth=null;db.patients=[];db.sessions=[];db.done={};db.felt={};db.comm={};videos={};
           ui.delBusy=false;ui.delMine=false;ui.bye=true;render();
         })
         .catch(function(e){
@@ -1673,12 +1687,15 @@ function fmtClock(sec){
 
 function ratingHtml(){
   var b='',i;
-  for(i=1;i<=10;i++)b+='<button class="rate" type="button" data-r="rate" data-n="'+i+'">'+i+'</button>';
+  for(i=1;i<=10;i++)b+='<button class="rate'+(R.pick===i?' on':'')+'" type="button" data-r="rate" data-n="'+i+'" aria-pressed="'+(R.pick===i)+'">'+i+'</button>';
   return '<div class="r-inner r-finish"><p class="r-kicker">Séance terminée</p>'+
     '<h2 class="r-name">Comment l\u2019as-tu sentie ?</h2>'+
     '<p class="r-set">1 = très facile \u00b7 10 = très dure</p>'+
     '<div class="rategrid">'+b+'</div>'+
-    '<p class="muted small">Aurèle voit ta note et adapte la suite si besoin.</p></div>';
+    '<label class="rcom"><span class="lab">Un petit mot pour Aurèle ? (facultatif)</span>'+
+      '<textarea id="xcom" rows="3" maxlength="500" placeholder="Une douleur, une gêne, un exercice trop dur ou trop facile\u2026">'+esc(R.com||'')+'</textarea></label>'+
+    '<button class="btn big" type="button" data-r="rate-send" id="xsend"'+(R.pick?'':' disabled')+'>Envoyer</button>'+
+    '<p class="muted small">Aurèle lit ta note et ton mot, et adapte la suite si besoin.</p></div>';
 }
 function chainHtml(s){
   if(!inChain())return '';
@@ -1757,17 +1774,29 @@ function startRun(sid,date){
   clearInterval(rt);rt=setInterval(rtick,200);
 }
 function finishRun(){
-  R.finished=true;R.ask=true;R.rate=null;
+  R.finished=true;R.ask=true;R.rate=null;R.pick=null;R.com='';
   clearInterval(rt);endBeep();buzz([200,80,200,80,320]);releaseWake();
   renderRunner();
 }
 /* La personne note la difficulté de la séance avant de revenir au calendrier. */
-function sendRate(n){
+function pickRate(n){
+  R.pick=n;
+  var all=$run.querySelectorAll('.rate'),i;
+  for(i=0;i<all.length;i++){
+    var on=+all[i].getAttribute('data-n')===n;
+    all[i].classList.toggle('on',on);all[i].setAttribute('aria-pressed',on);
+  }
+  var go=document.getElementById('xsend');if(go)go.disabled=false;
+}
+function sendRate(){
+  var n=R.pick,com=(R.com||'').trim().slice(0,500);
+  if(!n)return;
   R.rate=n;R.ask=false;
   if(!ui.preview){
     db.done[R.sid+'|'+R.date]=true;
     db.felt[R.sid+'|'+R.date]=n;
-    sbSetDone(R.sid,R.date,n);
+    if(com)db.comm[R.sid+'|'+R.date]=com;
+    sbSetDone(R.sid,R.date,n,com);
   }
   renderRunner();
 }
@@ -1793,9 +1822,11 @@ $run.addEventListener('click',function(e){
   if(a==='toggle'){if(R.mode==='run')pauseTimer();else startTimer();}
   else if(a==='next')nextExercise();
   else if(a==='quit'){if(R.quitAsk)closeRunner();else{R.quitAsk=true;b.textContent='Confirmer : quitter la séance';}}
-  else if(a==='rate')sendRate(+b.getAttribute('data-n'));
+  else if(a==='rate')pickRate(+b.getAttribute('data-n'));
+  else if(a==='rate-send')sendRate();
   else if(a==='close')closeRunner();
 });
+$run.addEventListener('input',function(e){if(R&&e.target.id==='xcom')R.com=e.target.value;});
 document.addEventListener('visibilitychange',function(){if(R&&!R.finished&&document.visibilityState==='visible')requestWake();});
 
 //<bbuilders>
