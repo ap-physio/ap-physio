@@ -338,6 +338,7 @@ button.cell{cursor:pointer}
 .x-name{margin:0;font:700 clamp(1.25rem,5.2vw,1.7rem)/1.15 var(--font-display);text-wrap:balance}
 .x-idx{margin:0;flex:none;color:var(--muted);font-size:.92rem;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
 .x-idx small{display:block;margin-top:2px;color:var(--accent-ink);font-size:.74rem;letter-spacing:.06em}
+.x-fix{flex:none}
 .x-chain{flex:none;border:1px solid var(--accent);border-radius:4px;padding:9px 12px 10px;background:var(--card,transparent)}
 .x-chain .lab{display:block;color:var(--accent-ink);font:600 .68rem/1 var(--font-body);letter-spacing:.14em;text-transform:uppercase;margin-bottom:7px}
 .x-chain ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 8px}
@@ -1725,13 +1726,12 @@ function runnerHtml(){
     '<header class="x-head"><h2 class="x-name">'+esc(ex.name)+'</h2>'+
       '<p class="x-idx">Ex : '+(R.i+1)+'/'+n+
         (inChain()?'<small>enchaînement '+(R.k+1)+'/'+R.blk.length+'</small>':'')+'</p></header>'+
-    chainHtml(s)+'<div class="x-scroll">'+
+    '<section class="x-card x-dose x-fix">'+
+        '<div><span class="lab">Série</span><strong>'+(R.set+1)+' / '+blkSets(s,R.blk)+'</strong></div>'+
+        dose+restCell+
+      '</section>'+chainHtml(s)+'<div class="x-scroll">'+
       '<div class="x-video">'+videoHtml(ex)+'</div>'+
       cue+note+
-      '<section class="x-card x-dose">'+
-        '<div><span class="lab">Séries</span><strong>'+(R.set+1)+' / '+blkSets(s,R.blk)+'</strong></div>'+
-        dose+restCell+
-      '</section>'+
     '</div>'+
     '<div class="x-foot">'+nx+timerHtml()+
       '<button class="btn big" type="button" data-r="next">'+lbl+'</button>'+
