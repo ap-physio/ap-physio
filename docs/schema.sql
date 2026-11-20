@@ -186,9 +186,20 @@ alter table public.seance_exercices drop column if exists repetitions;
 alter table public.seance_exercices drop column if exists repos_series;
 alter table public.seance_exercices drop column if exists repos_exercice;
 
--- Un exercice n'apparaît qu'une fois par séance.
-create unique index if not exists seance_exercices_unique
-  on public.seance_exercices (seance_id, exercice_id);
+-- Un même exercice peut revenir plusieurs fois dans une séance : l'ancienne
+-- contrainte d'unicité est retirée.
+drop index if exists public.seance_exercices_unique;
+
+-- Matériel à prévoir pour cet exercice dans cette séance (type et poids),
+-- saisi librement par l'administrateur et montré à la personne avant le départ.
+alter table public.seance_exercices add column if not exists materiel text not null default '';
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'seance_ex_materiel_len') then
+    alter table public.seance_exercices
+      add constraint seance_ex_materiel_len check (char_length(materiel) <= 80);
+  end if;
+end $$;
 
 create index if not exists seance_exercices_seance_idx
   on public.seance_exercices (seance_id, position);

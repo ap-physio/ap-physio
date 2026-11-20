@@ -20,6 +20,22 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;padding:0}
 img{max-width:100%}
 [hidden]:not([hidden=until-found i]){display:none!important}
+/* Fenêtre « avant de commencer » : exercices et matériel à prévoir. */
+.brief{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(18,18,17,.6)}
+.brief[hidden]{display:none}
+.brief-card{width:100%;max-width:520px;max-height:calc(100dvh - 32px);overflow:auto;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:20px 20px 18px;display:grid;gap:10px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.brief-k{margin:0;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--accent-ink)}
+.brief-card h2{margin:0;font:600 1.4rem/1.2 var(--font-display)}
+.brief-h{margin:6px 0 0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding-bottom:6px;border-bottom:1px solid var(--line)}
+.brief-h span:last-child{text-align:right}
+.brief-list{list-style:none;margin:0;padding:0;counter-reset:bl}
+.brief-list li{counter-increment:bl;display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);gap:4px 12px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--line)}
+.brief-list li::before{content:counter(bl);font:700 1.05rem var(--font-display);color:var(--accent-ink);min-width:1.2ch}
+.brief-list .bn{font-weight:600}
+.brief-list .bm{text-align:right;color:var(--fg)}
+.brief-list .bm.none{color:var(--muted);font-style:italic}
+.brief-act{display:grid;gap:8px;margin-top:8px}
+@media (max-width:380px){.brief-list li{grid-template-columns:auto minmax(0,1fr)}.brief-list .bm{grid-column:2;text-align:left}.brief-h{grid-template-columns:1fr}.brief-h span:last-child{display:none}}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600&display=swap">
 </head>
@@ -447,6 +463,7 @@ button.cell{cursor:pointer}
 
 <div id="app"></div>
 <div id="runner" class="runner" role="dialog" aria-modal="true" aria-label="Séance en cours" hidden></div>
+<div id="brief" class="brief" role="dialog" aria-modal="true" aria-labelledby="brief-t" hidden></div>
 <div id="breath" class="b-run" role="dialog" aria-modal="true" aria-labelledby="btitle" hidden>
   <div class="b-bar"><div class="b-progress" id="bprog"></div></div>
   <header class="b-head">
@@ -572,7 +589,7 @@ function loadAll(){
     });
     r[3].data.forEach(function(it){
       var o = byId[it.seance_id];
-      if(o) o.items.push({exId:it.exercice_id, sets:it.series, value:it.valeur, rest:it.repos, note:it.note||'', link:!!it.enchaine});
+      if(o) o.items.push({exId:it.exercice_id, sets:it.series, value:it.valeur, rest:it.repos, note:it.note||'', matos:it.materiel||'', link:!!it.enchaine});
     });
     db.done = {};
     db.felt = {};
@@ -655,7 +672,7 @@ function sbSaveSession(s){
     return sb.from('seance_exercices').delete().eq('seance_id', id).then(function(){
       return sb.from('seance_exercices').insert(s.items.map(function(it, i){
         return {seance_id:id, exercice_id:it.exId, position:i,
-                series:it.sets, valeur:it.value, repos:it.rest, note:it.note||'',
+                series:it.sets, valeur:it.value, repos:it.rest, note:it.note||'', materiel:String(it.matos||'').trim().slice(0,80),
                 enchaine: !!(it.link && i < s.items.length - 1)};
       }));
     }).then(function(){
@@ -953,7 +970,11 @@ function sessRow(s){
     '<button class="btn small danger'+(c?' on':'')+'" type="button" data-a="del" data-s="'+s.id+'">'+(c?'Confirmer':'Supprimer')+'</button></div></div>';
 }
 function prepHtml(s){
-  var need=sessEquip(s);
+  var need=sessEquip(s),low=need.map(function(x){return x.toLowerCase();});
+  s.items.forEach(function(it){
+    var t=(it.matos||'').trim();
+    if(t&&low.indexOf(t.toLowerCase())<0){low.push(t.toLowerCase());need.push(t);}
+  });
   if(!need.length)return '<p class="meta">Aucun matériel nécessaire.</p>';
   return '<div class="equip"><p class="eq-title">Matériel à préparer</p><div class="chips">'+need.map(function(x){return '<span class="chip tagchip">'+esc(x)+'</span>';}).join('')+'</div></div>';
 }
@@ -1100,6 +1121,8 @@ function itemHtml(it,i,arr){
   while(dern<n-1 && arr[dern].link) dern++;
   var chaine = dern>prem, apres = i>prem;
   var refSets = arr[prem], refRest = arr[dern];
+  var rang='', nb=arr.filter(function(x){return x.exId===it.exId;}).length;
+  if(nb>1){var k0=0,j0;for(j0=0;j0<=i;j0++)if(arr[j0].exId===it.exId)k0++;rang=' <small class="muted">('+k0+'/'+nb+')</small>';}
 
   var cSets = (i===prem)
     ? '<label class="field" for="it-sets-'+i+'">Séries'+(chaine?' de l\u2019enchaînement':'')+
@@ -1119,7 +1142,7 @@ function itemHtml(it,i,arr){
       (refSets.sets>1?'Le tout '+refSets.sets+' fois.':'Une seule fois.')+'</p>'
     : '';
 
-  return '<div class="item'+(it.link&&i<n-1?' link-down':'')+(apres?' link-up':'')+'"><div class="item-top"><span class="n">'+(i+1)+'</span><span class="nm">'+esc(ex.name)+'</span>'+
+  return '<div class="item'+(it.link&&i<n-1?' link-down':'')+(apres?' link-up':'')+'"><div class="item-top"><span class="n">'+(i+1)+'</span><span class="nm">'+esc(ex.name)+rang+'</span>'+
     '<button class="icon" type="button" data-a="ed-up" data-i="'+i+'" aria-label="Monter"'+(i===0?' disabled':'')+'>↑</button>'+
     '<button class="icon" type="button" data-a="ed-down" data-i="'+i+'" aria-label="Descendre"'+(i===n-1?' disabled':'')+'>↓</button>'+
     '<button class="icon" type="button" data-a="ed-rm" data-i="'+i+'" aria-label="Retirer l’exercice">✕</button></div>'+
@@ -1129,6 +1152,8 @@ function itemHtml(it,i,arr){
     '</div>'+ordre+
     (i<n-1?'<button class="linkbtn'+(it.link?' on':'')+'" type="button" data-a="ed-link" data-i="'+i+'" aria-pressed="'+(!!it.link)+'">'+
       (it.link?'\u2713 Enchaîné avec '+esc(EX(arr[i+1].exId).name)+' \u00b7 pas de repos entre les deux':'+ Enchaîner avec l\u2019exercice suivant')+'</button>':'')+
+    '<label class="field" for="it-mat-'+i+'">Matériel à prévoir : type et poids (facultatif)'+
+      '<input id="it-mat-'+i+'" data-f="matos" data-i="'+i+'" type="text" maxlength="80" value="'+esc(it.matos||'')+'" placeholder="Ex. : haltères 8 kg, élastique moyen"></label>'+
     '<label class="field" for="it-note-'+i+'">Consigne du jour, effacée une fois la séance faite (facultatif)'+
       '<input id="it-note-'+i+'" data-f="note" data-i="'+i+'" type="text" maxlength="200" value="'+esc(it.note||'')+'" placeholder="Ex. : va moins bas que la dernière fois"></label>'+
     '</div>';
@@ -1151,12 +1176,12 @@ function editorHtml(){
     '<div class="field"><span>Dates de la séance</span>'+(chips?'<div class="chips">'+chips+'</div>':'')+
     '<div class="row"><input id="ed-newdate" data-f="newdate" type="date" aria-label="Nouvelle date" value="'+esc(ui.newDate)+'"><button class="btn sec small" type="button" data-a="ed-adddate">Ajouter la date</button></div></div>'+eqLine+warnLine+'</section>';
   var list=db.exercises.filter(function(ex){return ui.cat==='Tous'||ex.cat===ui.cat;}).map(function(ex){
-    var on=s.items.some(function(it){return it.exId===ex.id;});
-    return '<button type="button" class="pick" data-a="ed-toggle" data-e="'+ex.id+'" aria-pressed="'+on+'"><span class="pn"><b>'+esc(ex.name)+'</b><small>'+esc(ex.cat)+' · '+(ex.unit==='sec'?'secondes':'répétitions')+(ex.equip&&ex.equip.length?' · '+ex.equip.map(esc).join(', '):'')+'</small></span><span class="st">'+(on?'✓ Ajouté':'+ Ajouter')+'</span></button>';
+    var cnt=s.items.filter(function(it){return it.exId===ex.id;}).length,on=cnt>0;
+    return '<button type="button" class="pick" data-a="ed-toggle" data-e="'+ex.id+'" aria-pressed="'+on+'"><span class="pn"><b>'+esc(ex.name)+'</b><small>'+esc(ex.cat)+' · '+(ex.unit==='sec'?'secondes':'répétitions')+(ex.equip&&ex.equip.length?' · '+ex.equip.map(esc).join(', '):'')+'</small></span><span class="st">'+(on?'✓ '+(cnt>1?cnt+' fois':'Ajouté')+' · + encore':'+ Ajouter')+'</span></button>';
   }).join('');
   h+='<div class="split"><section class="panel"><h3>1 · Choisis les exercices</h3><div class="chips">'+
     cats.map(function(c){return '<button type="button" class="chip" data-a="ed-cat" data-c="'+c+'" aria-pressed="'+(ui.cat===c)+'">'+c+'</button>';}).join('')+
-    '</div><div class="picks">'+list+'</div>'+
+    '</div><p class="muted small">Touche un exercice autant de fois que nécessaire pour le répéter dans la séance. Retire-le avec ✕ dans l’étape 2.</p><div class="picks">'+list+'</div>'+
     (ui.edNew
       ? '<form class="subform" data-form="ednew" novalidate><h4>Nouvel exercice</h4>'+
         '<label class="field" for="en-name">Nom<input id="en-name" name="name" type="text" maxlength="60" autocomplete="off"></label>'+
@@ -1250,11 +1275,9 @@ function openEditor(sid,pid){
   ui.edit=s?JSON.parse(JSON.stringify(s)):{id:null,patientId:pid||(db.patients[0]?db.patients[0].id:''),title:'',dates:[],exRest:30,items:[]};
   ui.aview='edit';ui.cat='Tous';ui.newDate=todayIso;ui.edErr='';nav();
 }
-function toggleEx(id){
-  var a=ui.edit.items,i,idx=-1;
-  for(i=0;i<a.length;i++)if(a[i].exId===id)idx=i;
-  if(idx>-1)a.splice(idx,1);
-  else a.push({exId:id,sets:3,value:EX(id).unit==='sec'?30:12,rest:45,note:'',link:false});
+function addEx(id){
+  // Un exercice peut revenir autant de fois qu'on veut dans la même séance.
+  ui.edit.items.push({exId:id,sets:3,value:EX(id).unit==='sec'?30:12,rest:45,note:'',matos:'',link:false});
 }
 function move(i,dir){
   var a=ui.edit.items,j=i+dir,t;
@@ -1299,7 +1322,7 @@ $app.addEventListener('click',function(e){
     case 'cal-prev':ui.cal=new Date(ui.cal.getFullYear(),ui.cal.getMonth()-1,1);render();break;
     case 'cal-next':ui.cal=new Date(ui.cal.getFullYear(),ui.cal.getMonth()+1,1);render();break;
     case 'day':ui.sel=d.d;render();break;
-    case 'start':startRun(d.s,ui.sel);break;
+    case 'start':openBrief(d.s);break;
     case 'tab-s':ui.aview='sessions';ui.pid=null;ui.preview=null;ui.confirmDel=null;nav();break;
     case 'open-p':ui.pid=d.p;ui.aview='patient';ui.confirmDel=null;nav();break;
     case 'preview-on':ui.preview=d.p;ui.pview='seances';ui.sel=todayIso;ui.cal=firstOfMonth(new Date());nav();break;
@@ -1381,7 +1404,7 @@ $app.addEventListener('click',function(e){
     case 'ed-new-on':ui.edNew=true;ui.edNewErr='';render();
       setTimeout(function(){var el=document.getElementById('en-name');if(el)el.focus();},0);break;
     case 'ed-new-off':ui.edNew=false;ui.edNewErr='';render();break;
-    case 'ed-toggle':toggleEx(d.e);ui.edErr='';render();break;
+    case 'ed-toggle':addEx(d.e);ui.edErr='';render();break;
     case 'ed-up':move(+d.i,-1);render();break;
     case 'ed-down':move(+d.i,1);render();break;
     case 'ed-rm':ui.edit.items.splice(+d.i,1);render();break;
@@ -1415,6 +1438,7 @@ function onField(el){
     else if(f==='value')it.value=num(el.value,1,300);
     else if(f==='rest')it.rest=num(el.value,0,600);
     else if(f==='note'){it.note=el.value;return;}
+    else if(f==='matos'){it.matos=el.value;return;}
   }
   updateEstimate();
 }
@@ -1486,8 +1510,8 @@ $app.addEventListener('submit',function(e){
       .then(function(ex){
         db.exercises.push(ex);
         // On l'ajoute directement à la séance en cours de préparation.
-        if(ui.edit&&!ui.edit.items.some(function(it){return it.exId===ex.id;}))
-          ui.edit.items.push({exId:ex.id,sets:3,value:ex.unit==='sec'?30:12,rest:45,note:'',link:false});
+        if(ui.edit)
+          ui.edit.items.push({exId:ex.id,sets:3,value:ex.unit==='sec'?30:12,rest:45,note:'',matos:'',link:false});
         ui.edNew=false;ui.edNewErr='';ui.cat=ex.cat;render();toast('Exercice créé et ajouté');
       })
       .catch(function(e){console.error(e);ui.edNewErr='L’exercice n’a pas pu être créé.';render();});
@@ -1760,6 +1784,60 @@ function renderRunner(){
   $run.hidden=false;
   $run.innerHTML=runnerHtml();
 }
+var $brief=document.getElementById('brief'),B=null,briefLast=null;
+function sessById(id){var i;for(i=0;i<db.sessions.length;i++)if(db.sessions[i].id===id)return db.sessions[i];return null;}
+function briefMat(it){
+  var t=String(it.matos||'').trim();
+  if(t)return esc(t);
+  var eq=EX(it.exId).equip||[];
+  return eq.length?esc(eq.join(', ')):'';
+}
+function briefHtml(){
+  var s=sessById(B.sid);
+  var rows=s.items.map(function(it){
+    var m=briefMat(it);
+    return '<li><span class="bn">'+esc(EX(it.exId).name)+'</span><span class="bm'+(m?'':' none')+'">'+(m||'Sans matériel')+'</span></li>';
+  }).join('');
+  return '<div class="brief-card"><p class="brief-k">Avant de commencer</p><h2 id="brief-t">'+esc(s.title)+'</h2>'+
+    '<p class="meta">≈ '+fmtDur(sessTime(s))+' · '+plural(s.items.length,'exercice')+'</p>'+
+    '<p class="brief-h"><span>Exercice</span><span>Matériel à prévoir</span></p>'+
+    '<ol class="brief-list">'+rows+'</ol>'+
+    '<div class="brief-act"><button class="btn big" type="button" data-bf="go" id="brief-go">C’est parti</button>'+
+    '<button class="btn sec" type="button" data-bf="close">Retour</button></div></div>';
+}
+function openBrief(sid){
+  var s=sessById(sid);
+  if(!s||!s.items.length)return;
+  B={sid:sid,date:ui.sel};briefLast=document.activeElement;
+  $brief.innerHTML=briefHtml();$brief.hidden=false;
+  document.body.style.overflow='hidden';
+  var g=document.getElementById('brief-go');if(g)g.focus();
+}
+function closeBrief(){
+  $brief.hidden=true;$brief.innerHTML='';B=null;
+  if(!R)document.body.style.overflow='';
+  if(briefLast&&briefLast.focus)briefLast.focus();
+}
+$brief.addEventListener('click',function(e){
+  var b=e.target.closest('[data-bf]');
+  if(!b){if(e.target===$brief)closeBrief();return;}
+  if(b.getAttribute('data-bf')==='go'){
+    var sid=B.sid,date=B.date;
+    $brief.hidden=true;$brief.innerHTML='';B=null;briefLast=null;
+    startRun(sid,date);
+  }else closeBrief();
+});
+document.addEventListener('keydown',function(e){
+  if(!B)return;
+  if(e.key==='Escape'){closeBrief();return;}
+  if(e.key==='Tab'){
+    var f=$brief.querySelectorAll('button');
+    if(!f.length)return;
+    var a=f[0],z=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus();}
+    else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus();}
+  }
+});
 function startRun(sid,date){
   R={sid:sid,date:date,i:0,bi:0,k:0,set:0,side:0,blk:null,blocks:null,phase:'hold',mode:'ready',left:0,end:0,
      t0:Date.now(),finished:false,quitAsk:false,
